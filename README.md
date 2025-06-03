@@ -6,3 +6,6 @@ Aditional (Reqired) Downloads ThirdParty Source Folder. Unpack the dowloaded thi
 
 _(Note I may rewrite it to depend on the general SDK installation of Cuda and CuDNN, depending on Path settings and System Variables, this current take is an attempt to make it somewhat stand alone)_
 - [VActML_Source_ThirdParty.zip](https://drive.google.com/file/d/1gFahD7kSydta6d4YZs3LgYqo54lmAFfP/view?usp=sharing "ThirdParty zip file dependencys")
+
+## VActOIC
+This plugin depends on the ``FActFiles`` plugin
