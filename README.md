@@ -1,8 +1,7 @@
 # VActUEPlugins
 Vivacity Interactive UE Plugins, generally copy the plugin in context to your Projects ``Plugins`` folder or Engine ``Plugins`` folder.
 
-[!TIP]
-Adviced way to ``clone`` only particular plugins use  ``sparse-checkout``, see example below for ``main`` branch
+[!TIP] Adviced way to ``clone`` only particular plugins use  ``sparse-checkout``, see example below for ``main`` branch
 ```
 git clone --no-checkout https://github.com/Vivacity-Interactive/VActUEPlugins.git Plugins
 cd Plugins
@@ -14,30 +13,26 @@ git checkout main
 ## VActML _(Unfinished)_
 This is still work in progress, attempt to bring more native ML to unreal engine, but this may cause GPU resource competition. best may be to hook into UE intial support with Cuda and CuDNN duable.
 
-[!NOTE]
-similar attempt using tensorflow direct support, however tensorflow core packag had some compilation flag issues, and tensorflow full library depends on pythorgh and python compilation, this last dependecy I prefer to avoid
+[!NOTE] similar attempt using tensorflow direct support, however tensorflow core packag had some compilation flag issues, and tensorflow full library depends on pythorgh and python compilation, this last dependecy I prefer to avoid
 
 ### Install
 Download ``ThirdParty`` Source Folder. Unpack the downloaded third party folder into ``VActML/Source/``. It contains Cuda and CuDNN dependencies.
 
-[!NOTE]
-I may rewrite it to depend on the general SDK installation of Cuda and CuDNN, depending on Path settings and System Variables, this current take is an attempt to make it somewhat stand alone
+[!NOTE] I may rewrite it to depend on the general SDK installation of Cuda and CuDNN, depending on Path settings and System Variables, this current take is an attempt to make it somewhat stand alone
 
 - [VActML_Source_ThirdParty.zip](https://drive.google.com/file/d/1gFahD7kSydta6d4YZs3LgYqo54lmAFfP/view?usp=sharing "ThirdParty zip file dependencies")
 
 ## VActOIC _(Alpha)_
 This plugin allows for loading VAct Json (Vson) type files and instantiate entire compositions of objects like meshes, and particles, also includes construction ``SceneComponent`` or ``ActorComponent`` onto object that have these meta data assigned.
 
-[!IMPORTANT]
-This plugin depends on the ``FActFiles`` plugin, formats compact and binary ar not yet supported
+[!IMPORTANT] This plugin depends on the ``FActFiles`` plugin, formats compact and binary ar not yet supported
 
 ### Usage
 - Create a ``OICProfile`` (Blueprint), reference it to a file
 - Drag a ``OICActor`` into the scene, select ``OICComponent`` and assign a created ``OICProfile`` and press update
 - Profile instantiation can also be managed in ``OICManagerActor``
 
-[!WARNING]
-Update breaks using tracking, sor reloading atm requires you to delete the OICActor and reassign and update again
+[!WARNING] Update breaks using tracking, sor reloading atm requires you to delete the OICActor and reassign and update again
 
 ## VActFiles _(Beta)_
 This plugin allows for loading VAct Json (Vson), and has other helper files for Tokenizing and reading and interpreting files.
@@ -56,5 +51,4 @@ Allows to communicate with COM devices and Bluetooth, tested with Arduino simple
 - COM Devices
 - Bluetooth _(WIP)_
 
-[!NOTE]
-Bluetooth is still incomplete, need to setup connection protocol and test, listing available devices is already successful, also still resolving best usage approach
+[!NOTE] Bluetooth is still incomplete, need to setup connection protocol and test, listing available devices is already successful, also still resolving best usage approach
