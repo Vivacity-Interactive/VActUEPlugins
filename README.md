@@ -1,12 +1,12 @@
 # VActUEPlugins
-Vivacity Interactive UE Plugins
+Vivacity Interactive UE Plugins, generally copy the plugin in context to your Projects ``Plugins`` folder or Engine ``Plugins`` folder.
 
 ## VActML _(Unfinished)_
 This is still work in progress, attempt to bring more native ML to unreal engine, but this may cause GPU resource competition. best may be to hook into UE intial support with Cuda and CuDNN duable.
 
 _(similar attempt using tensorflow direct support, however tensorflow core packag had some compilation flag issues, and tensorflow full library depends on pythorgh and python compilation, this last dependecy I prefer to avoid)_
 
-### Additional Requirements
+### Install
 Download ``ThirdParty`` Source Folder. Unpack the downloaded third party folder into ``VActML/Source/``. It contains Cuda and CuDNN dependencies.
 
 _(Note I may rewrite it to depend on the general SDK installation of Cuda and CuDNN, depending on Path settings and System Variables, this current take is an attempt to make it somewhat stand alone)_
@@ -19,7 +19,7 @@ _(This plugin depends on the ``FActFiles`` plugin, formats compact and binary ar
 
 ### Usage
 - Create a ``OICProfile`` (Blueprint), reference it to a file
-- Drag a OICActor into the scene, select ``OICComponent`` and assign a created ``OICProfile`` and press update
+- Drag a ``OICActor`` into the scene, select ``OICComponent`` and assign a created ``OICProfile`` and press update
 - Profile instantiation can also be managed in ``OICManagerActor``
 
 _(Update breaks using tracking, sor reloading atm requires you to delete the OICActor and reassign and update again)_
