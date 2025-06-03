@@ -18,6 +18,12 @@ struct VACTBASE_API FVActBase
     GENERATED_BODY()
 
     static const FName _DefaultRootName;
+    
+    template<typename SizeType=int32>
+    static FORCEINLINE SizeType Cycle(SizeType Index, SizeType End)
+	{
+		return (Index < 0) * End + (Index % End);
+	}
 
     template<typename InElementType, typename InAllocatorType = FDefaultAllocator>
     static FORCEINLINE int32 NearestActors(TArray<InElementType*, InAllocatorType>& Into, const TArray<FOverlapResult, InAllocatorType>& Overlaps, const FVector& Origin, float MaxRadius = FLT_MAX)
