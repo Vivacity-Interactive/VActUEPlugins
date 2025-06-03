@@ -17,7 +17,7 @@ List of Plugins
 - [VActOIC](#vactoic) _(Alpha)_
 - [VActDevices](#vactdevices) _(Alpha)_
 - [VActML](#vactml) _(Unfinished)_
-- [VActVR](#vactml) _(Unfinished)_
+- [VActVR](#vactml)
 
 ## VActBase
 Contains the basic library items Vivacity Interactive uses for most projects as bases, includes
