@@ -38,7 +38,7 @@ Contains the basic library items Vivacity Interactive uses for most projects as 
 
 ## VActDevices _(Alpha)_
 Allows to communicate with COM devices and Bluetooth, tested with Arduino simple setup.
-- COM Devies
+- COM Devices
 - Bluetooth _(WIP)_
 
 _(Bluetooth is still incomplete, need to setup connection protocol and test, listing available devices is already successful, also still resolving best usage approach)_
