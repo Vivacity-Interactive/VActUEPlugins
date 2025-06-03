@@ -1,0 +1,29 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "VActFiles",
+	"Description": "",
+	"Category": "Other",
+	"CreatedBy": "Vivacity Interactive",
+	"CreatedByURL": "vivacityinteractive.com",
+	"DocsURL": "docs.vact.com/files-lib",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": true,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "VActFiles",
+			"Type": "Runtime",
+			"LoadingPhase": "PreLoadingScreen"
+		},
+		{
+			"Name": "VActFilesEditor",
+			"Type": "Editor",
+			"LoadingPhase": "PreLoadingScreen"
+		}
+	]
+}

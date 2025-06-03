@@ -1,0 +1,35 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "VActOIC",
+	"Description": "",
+	"Category": "Other",
+	"CreatedBy": "Vivacity Interactive",
+	"CreatedByURL": "vivacityinteractive.com",
+	"DocsURL": "docs.vact.com/oic-lib",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": true,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "VActOIC",
+			"Type": "Runtime",
+			"LoadingPhase": "PreLoadingScreen"
+		},
+		{
+			"Name": "VActOICEditor",
+			"Type": "Editor",
+			"LoadingPhase": "PreLoadingScreen"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "VActFiles",
+			"Enabled": true
+		}
+	]
+}

@@ -1,0 +1,24 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "VActML",
+	"Description": "To train and use machine learning models (incl AI)",
+	"Category": "Other",
+	"CreatedBy": "Vivacity Interactive",
+	"CreatedByURL": "vivacityinteractive.com",
+	"DocsURL": "docs.vact.com/ml-lib",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": true,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "VActML",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}
