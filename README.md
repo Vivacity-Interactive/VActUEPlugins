@@ -3,7 +3,7 @@ Vivacity Interactive UE Plugins, generally copy the plugin in context to your Pr
 
 ![Static Badge](https://img.shields.io/badge/Tip-green)
 _Adviced way to ``clone`` only particular plugins use  ``sparse-checkout``, see example below for ``main`` branch_
-```
+```git-bash
 git clone --no-checkout https://github.com/Vivacity-Interactive/VActUEPlugins.git Plugins
 cd Plugins
 git sparse-checkout init
