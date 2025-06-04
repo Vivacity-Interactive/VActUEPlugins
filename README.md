@@ -11,7 +11,7 @@ git sparse-checkout set VActBase VActOIC VActFiles
 git checkout main
 ```
 ![Static Badge](https://img.shields.io/badge/Caution-red)
-_Don't forget ``cd Plugins`` before setting ``sparse-checkout``! If you forget: current git repro will be compemised_
+_Don't forget ``cd Plugins`` before setting ``sparse-checkout``! If you forget: current git repro will be compromised_
 
 List of Plugins
 - [VActBase](#vactbase)
