@@ -1,5 +1,6 @@
 #include "VRPlayerController.h"
 
+#include "Engine/EngineTypes.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
@@ -40,16 +41,26 @@ void AVRPlayerController::InitForNewVRCamera()
 bool AVRPlayerController::IsValidMoveLocation(const FHitResult& Hit, FVector& ProjectedLocation)
 {
 	bool bResult = false;
-	FVector QueryExtent = FVector::Zero();
-	FNavLocation OutNavLocation;
-	ANavigationData* UseNavData = nullptr;
-	UNavigationSystemV1* NavSystem = UNavigationSystemV1::GetNavigationSystem(GetWorld());
-	const bool bNavigate = NavSystem != nullptr && (UseNavData = NavSystem->GetDefaultNavDataInstance(FNavigationSystem::DontCreate)) != nullptr;
-	if (bNavigate)
+	bVRDynamic = bResult = Hit.Component.IsValid() && Hit.Component->GetCollisionObjectType() == DynamicObjectChannel;
+	if (!bVRDynamic)
 	{
-		bResult = NavSystem->ProjectPointToNavigation(Hit.Location, OutNavLocation, QueryExtent, UseNavData);
-		ProjectedLocation = OutNavLocation.Location;
+		FVector QueryExtent = FVector::Zero();
+		FNavLocation OutNavLocation;
+		ANavigationData* UseNavData = nullptr;
+		UNavigationSystemV1* NavSystem = UNavigationSystemV1::GetNavigationSystem(GetWorld());
+		const bool bNavigate = NavSystem != nullptr && (UseNavData = NavSystem->GetDefaultNavDataInstance(FNavigationSystem::DontCreate)) != nullptr;
+		if (bNavigate)
+		{
+			bResult = NavSystem->ProjectPointToNavigation(Hit.Location, OutNavLocation, QueryExtent, UseNavData);
+			ProjectedLocation = OutNavLocation.Location;
+		}
 	}
+	else
+	{
+		ProjectedLocation = Hit.Location;
+		VRDynamicComponent = Hit.Component;
+	}
+
 	return bResult;
 }
 
@@ -109,6 +120,8 @@ void AVRPlayerController::SetupInputComponent()
 void AVRPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
+
+	//TraceObjectTypes.Add(UEngineTypes::ConvertToObjectType(DynamicObjectChannel));
 
 	bool bValid = UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled();
 	if (bValid)
@@ -185,6 +198,22 @@ void AVRPlayerController::Move(const FInputActionValue& Value)
 
 		bool bHit = UGameplayStatics::PredictProjectilePath(GetWorld(), TraceParms, TraceResult);
 		if (bTraceUseNavMesh) { bHit = IsValidMoveLocation(TraceResult.HitResult, MoveTarget); }
+
+		const bool bAttatch = bVRDynamic && bHit;//&& VRDynamicComponent != nullptr && VRDynamicLastComponent.IsValid();
+		const bool bDetatch = bHit && VRDynamicLastComponent != nullptr && VRDynamicLastComponent.IsValid();
+		if (bAttatch)
+		{
+			FAttachmentTransformRules Rule = FAttachmentTransformRules::KeepWorldTransform;
+			Rule.bWeldSimulatedBodies = true;
+			bVRDynamicAttached = VRCamera->AttachToComponent(VRDynamicComponent.Get(), Rule);
+			if (bVRDynamicAttached) { VRDynamicLastComponent = VRDynamicComponent;  }
+		}
+		else if (bDetatch)
+		{
+			VRCamera->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+			VRDynamicLastComponent = nullptr;
+			bVRDynamicAttached = false;
+		}
 
 		const bool bUpdate = bHit != bMoveValid;
 		if (bUpdate)

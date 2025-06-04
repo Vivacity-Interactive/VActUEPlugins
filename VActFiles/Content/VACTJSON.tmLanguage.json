@@ -1,0 +1,297 @@
+{
+	"information_for_contributors": [
+		"This file has been converted from https://github.com/microsoft/vscode-JSON.tmLanguage/blob/master/JSON.tmLanguage",
+		"If you want to provide a fix or improvement, please create a pull request against the original repository.",
+		"Once accepted there, we are happy to receive an update request."
+	],
+	"version": "https://github.com/microsoft/vscode-JSON.tmLanguage/commit/9bd83f1c252b375e957203f21793316203f61f70",
+	"name": "VAct JSON (Vivacity Interactive)",
+	"scopeName": "source.vactjson",
+	"patterns": [
+		{
+			"include": "#value"
+		}
+	],
+	"repository": {
+		"array": {
+			"begin": "\\[",
+			"beginCaptures": {
+				"0": {
+					"name": "punctuation.definition.array.begin.vactjson"
+				}
+			},
+			"end": "\\]",
+			"endCaptures": {
+				"0": {
+					"name": "punctuation.definition.array.end.vactjson"
+				}
+			},
+			"name": "meta.structure.array.vactjson",
+			"patterns": [
+				{
+					"include": "#value"
+				},
+				{
+					"match": ",",
+					"name": "punctuation.separator.array.vactjson"
+				},
+				{
+					"match": "[^\\s\\]]",
+					"name": "invalid.illegal.expected-array-separator.vactjson"
+				}
+			]
+		},
+      "tuple": {
+			"begin": "\\(",
+			"beginCaptures": {
+				"0": {
+					"name": "punctuation.definition.tuple.begin.vactjson"
+				}
+			},
+			"end": "\\)",
+			"endCaptures": {
+				"0": {
+					"name": "punctuation.definition.tuple.end.vactjson"
+				}
+			},
+			"name": "meta.structure.tuple.vactjson",
+			"patterns": [
+				{
+					"include": "#value"
+				},
+				{
+					"match": ",",
+					"name": "punctuation.separator.tuple.vactjson"
+				},
+				{
+					"match": "[^\\s\\)]",
+					"name": "invalid.illegal.expected-tuple-separator.vactjson"
+				}
+			]
+		},
+      "tag": {
+			"begin": "\\<",
+			"beginCaptures": {
+				"0": {
+					"name": "punctuation.definition.tag.begin.vactjson"
+				}
+			},
+			"end": "\\>",
+			"endCaptures": {
+				"0": {
+					"name": "punctuation.definition.tag.end.vactjson"
+				}
+			},
+			"name": "meta.structure.tag.vactjson",
+			"patterns": [
+				{
+					"include": "#value"
+				},
+				{
+					"match": ",",
+					"name": "punctuation.separator.tag.vactjson"
+				},
+				{
+					"match": "[^\\s\\>]",
+					"name": "invalid.illegal.expected-tag-separator.vactjson"
+				}
+			]
+		},
+		"constant": {
+			"match": "\\b(?:null)\\b",
+			"name": "constant.language.vactjson"
+		},
+        "bool": {
+			"match": "\\b(?:true|false)\\b",
+			"name": "constant.bool.vactjson"
+		},
+        "variable": {
+			"match": "(?x)(?:[_a-zA-Z]{1}[_a-zA-Z0-9])",
+			"name": "constant.variable.vactjson"
+		},
+        "reference": {
+			"begin": "\\@",
+            "beginCaptures": {
+				"0": {
+					"name": "punctuation.definition.reference.begin.vactjson"
+				}
+			},
+			"name": "constant.reference.vactjson",
+            "patterns": [
+				{
+					"include": "#string"
+				},
+                {
+					"include": "#variable"
+				}
+			]
+		},
+        "hexadecimal": {
+			"match": "(?x)(?:[0-9a-fA-F]+)",
+			"name": "constant.hexadecimal.vactjson"
+		},
+		"number": {
+			"match": "(?x)        # turn on extended mode\n  [-+]?        # an optional plus minus\n  (?\n inf|nan| (?:\n    \\d*     # followed by zero or more digits\n  )\n  (?:\n    (?:\n      \\.    # a period\n      \\d+   # followed by one or more digits\n    )?\n    (?:\n      [eE]  # an e character\n      [+-]? # followed by an option +/-\n      \\d+   # followed by one or more digits\n    )?      # make exponent optional\n  )?        # make decimal portion optional\n )",
+			"name": "constant.numeric.vactjson"
+		},
+		"struct": {
+			"begin": "\\{",
+			"beginCaptures": {
+				"0": {
+					"name": "punctuation.definition.struct.begin.vactjson"
+				}
+			},
+			"end": "\\}",
+			"endCaptures": {
+				"0": {
+					"name": "punctuation.definition.struct.end.vactjson"
+				}
+			},
+			"name": "meta.structure.struct.vactjson",
+			"patterns": [
+				{
+					"comment": "the JSON struct key",
+					"include": "#structkey"
+				},
+				{
+					"begin": ":",
+					"beginCaptures": {
+						"0": {
+							"name": "punctuation.separator.struct.key-value.vactjson"
+						}
+					},
+					"end": "(,)|(?=\\})",
+					"endCaptures": {
+						"1": {
+							"name": "punctuation.separator.struct.pair.vactjson"
+						}
+					},
+					"name": "meta.structure.struct.value.vactjson",
+					"patterns": [
+						{
+							"comment": "the JSON struct value",
+							"include": "#value"
+						},
+						{
+							"match": "[^\\s,]",
+							"name": "invalid.illegal.expected-struct-separator.vactjson"
+						}
+					]
+				},
+				{
+					"match": "[^\\s\\}]",
+					"name": "invalid.illegal.expected-struct-separator.vactjson"
+				}
+			]
+		},
+		"string": {
+			"begin": "\"",
+			"beginCaptures": {
+				"0": {
+					"name": "punctuation.definition.string.begin.vactjson"
+				}
+			},
+			"end": "\"",
+			"endCaptures": {
+				"0": {
+					"name": "punctuation.definition.string.end.vactjson"
+				}
+			},
+			"name": "string.quoted.double.vactjson",
+			"patterns": [
+				{
+					"include": "#stringcontent"
+				}
+			]
+		},
+        "blob": {
+			"begin": "&\"",
+			"beginCaptures": {
+				"0": {
+					"name": "punctuation.definition.string.begin.vactjson"
+				}
+			},
+			"end": "\"",
+			"endCaptures": {
+				"0": {
+					"name": "punctuation.definition.string.end.vactjson"
+				}
+			},
+			"name": "string.quoted.double.vactjson",
+			"patterns": [
+				{
+					"include": "#stringcontent"
+				}
+			]
+		},
+		"structkey": {
+			"name": "string.vactjson support.type.property-name.vactjson",
+			"patterns": [
+				{
+					"include": "#string"
+				},
+                {
+					"include": "#number"
+				},
+                {
+					"include": "#variable"
+				},
+                {
+					"include": "#hexadecimal"
+				}
+			]
+		},
+		"stringcontent": {
+			"patterns": [
+				{
+					"match": "(?x)                # turn on extended mode\n  \\\\                # a literal backslash\n  (?:               # ...followed by...\n    [\"\\\\/bfnrt]     # one of these characters\n    |               # ...or...\n    u               # a u\n    [0-9a-fA-F]{4}) # and four hex digits",
+					"name": "constant.character.escape.vactjson"
+				},
+				{
+					"match": "\\\\.",
+					"name": "invalid.illegal.unrecognized-string-escape.vactjson"
+				}
+			]
+		},
+		"value": {
+			"patterns": [
+				{
+					"include": "#constant"
+				},
+                {
+					"include": "#bool"
+				},
+				{
+					"include": "#number"
+				},
+				{
+					"include": "#string"
+				},
+				{
+					"include": "#array"
+				},
+				{
+					"include": "#struct"
+				},
+                {
+					"include": "#tag"
+				},
+                {
+					"include": "#tuple"
+				},
+                {
+					"include": "#variable"
+				},
+                {
+					"include": "#hexadecimal"
+				},
+                {
+					"include": "#reference"
+				},
+                {
+					"include": "#reference"
+				}
+			]
+		}
+	}
+}

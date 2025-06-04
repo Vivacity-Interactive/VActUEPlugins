@@ -63,12 +63,21 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VR State")
 	bool bTracePathShow;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VR State")
+	bool bVRDynamic;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VR State")
+	bool bVRDynamicAttached;
 		
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR State")
 	TEnumAsByte<EHMDTrackingOrigin::Type> TrackOrigin;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR State")
 	TArray<TEnumAsByte<EObjectTypeQuery>> TraceObjectTypes;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR State")
+	TEnumAsByte<ECollisionChannel> DynamicObjectChannel;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VR Settings")
 	float SecondaryScreenPercentage;
@@ -99,6 +108,12 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VR State")
 	TArray<FVector> TracePath;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VR State")
+	TWeakObjectPtr<UPrimitiveComponent> VRDynamicComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VR State")
+	TWeakObjectPtr<UPrimitiveComponent> VRDynamicLastComponent;
 
 public:
 	AVRPlayerController();
