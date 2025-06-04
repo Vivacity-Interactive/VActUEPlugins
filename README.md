@@ -3,7 +3,7 @@ Vivacity Interactive UE Plugins, generally copy the plugin in context to your Pr
 
 ![Static Badge](https://img.shields.io/badge/Tip-green)
 _Adviced way to ``clone`` only particular plugins use  ``sparse-checkout``, see example below for ``main`` branch_
-```
+```git-bash
 git clone --no-checkout https://github.com/Vivacity-Interactive/VActUEPlugins.git Plugins
 cd Plugins
 git sparse-checkout init
@@ -17,6 +17,7 @@ List of Plugins
 - [VActOIC](#vactoic) _(Alpha)_
 - [VActDevices](#vactdevices) _(Alpha)_
 - [VActML](#vactml) _(Unfinished)_
+- [VActVR](#vactml)
 
 ## VActBase
 Contains the basic library items Vivacity Interactive uses for most projects as bases, includes
@@ -65,3 +66,9 @@ Download ``ThirdParty`` Source Folder. Unpack the downloaded third party folder 
 _I may rewrite it to depend on the general SDK installation of Cuda and CuDNN, depending on Path settings and System Variables, this current take is an attempt to make it somewhat stand alone_
 
 - [VActML_Source_ThirdParty.zip](https://drive.google.com/file/d/1gFahD7kSydta6d4YZs3LgYqo54lmAFfP/view?usp=sharing "ThirdParty zip file dependencies")
+
+## VActVR
+VR C++ implementation, and Contains default blueprint derivatives 
+- ``BP_VRCameraPawn``
+- ``BP_VRPlayerControler``
+- ``BP_VRGameMode``
