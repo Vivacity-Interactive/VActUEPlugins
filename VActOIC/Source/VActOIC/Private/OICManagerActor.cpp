@@ -4,10 +4,17 @@
 #include "Kismet/GameplayStatics.h"
 #include "PhysicsEngine/BodySetup.h"
 
-const TCHAR AOICManagerActor::InstNameFormat[] = TEXT("%s_%d");
-const TCHAR AOICManagerActor::InstNameFormatP[] = TEXT("%s_%s_%d");
-const TCHAR AOICManagerActor::ObjNameFormat[] = TEXT("%s_%s");
-const TCHAR AOICManagerActor::ObjNameFormatP[] = TEXT("%s_%s");
+
+//const TCHAR AOICManagerActor::InstNameFormat[] = TEXT("%s_%d");
+//const TCHAR AOICManagerActor::InstNameFormatP[] = TEXT("%s_%s_%d");
+//const TCHAR AOICManagerActor::ObjNameFormat[] = TEXT("%s_%s");
+//const TCHAR AOICManagerActor::ObjNameFormatP[] = TEXT("%s_%s");
+
+#define OIC_INST_NAME_FORMAT TEXT("%s_%d")
+#define OIC_INST_NAME_FORMAT_P TEXT("%s_%s_%d")
+#define OIC_OBJ_NAME_FORMAT TEXT("%s")
+#define OIC_OBJ_NAME_FORMAT_P TEXT("%s_%s")
+
 const FName AOICManagerActor::_DefaultRootName = TEXT("DefaultRootComponent");
 
 AOICManagerActor* AOICManagerActor::GetInstance(const UObject* WorldContextObject)
@@ -175,7 +182,7 @@ void AOICManagerActor::UpdateOrInstantiateActor(UWorld* World, const FOICObject&
 	
 	if (bMayNotExist)
 	{
-		FString _InstanceName = FString::Printf(InstNameFormat, *Object.Actor->GetName(), Instance.Id);
+		FString _InstanceName = FString::Printf(OIC_INST_NAME_FORMAT, *Object.Actor->GetName(), Instance.Id);
 		FName _InstanceFName = FName(_InstanceName);
 		FOICTracker* Tracker = Profile.Trackers.Find(_InstanceFName);
 
@@ -211,8 +218,8 @@ void AOICManagerActor::UpdateOrInstantiateMesh(UWorld* World, const FOICObject& 
 	if (bMayNotExist)
 	{
 		FString _InstanceName = Profile.Parent 
-			? FString::Printf(InstNameFormatP, *Profile.Parent.GetName(), *Object.Mesh->GetName(), Instance.Id)
-			: FString::Printf(InstNameFormat, *Object.Mesh->GetName(), Instance.Id);
+			? FString::Printf(OIC_INST_NAME_FORMAT_P, *Profile.Parent.GetName(), *Object.Mesh->GetName(), Instance.Id)
+			: FString::Printf(OIC_INST_NAME_FORMAT, *Object.Mesh->GetName(), Instance.Id);
 
 		FName _InstanceFName = FName(_InstanceName);
 		FOICTracker* Tracker = Profile.Trackers.Find(_InstanceFName);
@@ -251,8 +258,8 @@ void AOICManagerActor::UpdateOrInstantiateParticle(UWorld* World, const FOICObje
 	if (bMayNotExist)
 	{
 		FString _InstanceName = Profile.Parent
-			? FString::Printf(InstNameFormatP, *Profile.Parent.GetName(), *Object.Mesh->GetName(), Instance.Id)
-			: FString::Printf(InstNameFormat, *Object.Mesh->GetName(), Instance.Id);
+			? FString::Printf(OIC_INST_NAME_FORMAT_P, *Profile.Parent.GetName(), *Object.Mesh->GetName(), Instance.Id)
+			: FString::Printf(OIC_INST_NAME_FORMAT, *Object.Mesh->GetName(), Instance.Id);
 
 		FName _InstanceFName = FName(_InstanceName);
 		FOICTracker* Tracker = Profile.Trackers.Find(_InstanceFName);
@@ -276,8 +283,8 @@ void AOICManagerActor::UpdateOrInstantiateParticle(UWorld* World, const FOICObje
 				if (Actor)
 				{
 					FString _ActorName = Profile.Parent
-						? FString::Printf(ObjNameFormatP, *Profile.Parent.GetName(), *Object.Mesh->GetName())
-						: FString::Printf(ObjNameFormat, *Object.Mesh->GetName(), Instance.Id);
+						? FString::Printf(OIC_OBJ_NAME_FORMAT_P, *Profile.Parent.GetName(), *Object.Mesh->GetName())
+						: FString::Printf(OIC_OBJ_NAME_FORMAT, *Object.Mesh->GetName());
 
 					Actor->SetFlags(RF_Transactional);
 					Actor->Rename(*_ActorName, nullptr, REN_DontCreateRedirectors);
@@ -341,7 +348,7 @@ void AOICManagerActor::UpdateOrInstantiateData(UWorld* World, const FOICObject& 
 
 	if (bMayNotExist)
 	{
-		FName _InstanceFName = FName(FString::Printf(InstNameFormat, *Object.Mesh->GetName(), Instance.Id));
+		FName _InstanceFName = FName(FString::Printf(OIC_INST_NAME_FORMAT, *Object.Mesh->GetName(), Instance.Id));
 		TObjectPtr<UObject>* DataPtr = Profile.Datas.Find(_InstanceFName);
 		if (DataPtr) { Data = DataPtr->Get(); }
 		if (!Object.Data)

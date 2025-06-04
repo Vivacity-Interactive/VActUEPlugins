@@ -30,13 +30,13 @@ class VACTOIC_API AOICManagerActor : public AActor
 {
 	GENERATED_BODY()
 
-	static const TCHAR InstNameFormat[];
+	//static const TCHAR InstNameFormat[];
 
-	static const TCHAR InstNameFormatP[];
+	//static const TCHAR InstNameFormatP[];
 
-	static const TCHAR ObjNameFormat[];
+	//static const TCHAR ObjNameFormat[];
 
-	static const TCHAR ObjNameFormatP[];
+	//static const TCHAR ObjNameFormatP[];
 
 
 	TMap<_FOICCacheProfileEntry, TWeakObjectPtr<UOICProfile>> ProfileCache;
