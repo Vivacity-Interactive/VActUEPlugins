@@ -36,19 +36,30 @@
 		},
 		{
 			"Name": "OpenXR",
-			"Enabled": true
+			"Enabled": true,
+			"SupportedTargetPlatforms": [
+					"Win64",
+					"Linux",
+					"Android"
+			]
 		},
 		{
 			"Name": "OpenXREyeTracker",
-			"Enabled": true
+			"Enabled": true,
+			"SupportedTargetPlatforms": [
+					"Win64",
+					"Linux",
+					"Android"
+			]
 		},
 		{
 			"Name": "OpenXRHandTracking",
-			"Enabled": true
-		},
-		{
-			"Name": "OpenXRHandTracking",
-			"Enabled": true
+			"Enabled": true,
+			"SupportedTargetPlatforms": [
+					"Win64",
+					"Linux",
+					"Android"
+			]
 		}
 	]
 }
