@@ -29,6 +29,8 @@ ANPCController::ANPCController()
 void ANPCController::BeginPlay()
 {
 	Super::BeginPlay();
+	const bool bInitNPC = NPC != nullptr && NPC.IsValid();
+	if (bInitNPC) { InitForNewNPC(); }
 }
 
 void ANPCController::Tick(float DeltaTime)

@@ -26,7 +26,7 @@ public:
 	UPROPERTY(EditAnywhere)
 	TArray<TSubclassOf<UActionEvent>> ActionEventClasses;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TWeakObjectPtr<AVActCharacter> NPC;
 
 protected:

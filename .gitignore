@@ -90,3 +90,6 @@ DerivedDataCache/*
 # Ignore Third party folders
 ThirdParty/*
 **/ThirdParty/*
+
+# Random
+VisualStudioTools/*
