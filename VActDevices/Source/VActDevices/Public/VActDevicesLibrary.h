@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Kismet/BlueprintFunctionLibrary.h"
-#include "VActDevicesBPLibrary.generated.h"
+#include "VActDevicesLibrary.generated.h"
 
 /* 
 *	Function library class.
@@ -23,7 +23,7 @@
 *	https://wiki.unrealengine.com/Custom_Blueprint_Node_Creation
 */
 UCLASS()
-class UVActDevicesBPLibrary : public UBlueprintFunctionLibrary
+class UVActDevicesLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_UCLASS_BODY()
 

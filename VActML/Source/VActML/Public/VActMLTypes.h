@@ -1,154 +1,39 @@
 #pragma once
 
-THIRD_PARTY_INCLUDES_START
-#include "cudnn.h"	
-#include "cuda_runtime.h"
-THIRD_PARTY_INCLUDES_END
-
 #include "CoreMinimal.h"
 #include "VActMLTypes.generated.h"
-
-UENUM()
-enum class EMLAlgorithm
-{
-    ConvFwd,
-    ConvBwdFilter,
-    ConvBwdData,
-    RNN,
-    CTCLoss,
-    // PPOFwd,
-    // PPOBwdFilter,
-    // PPOBwdData,
-    // DyNN
-};
-
-UENUM()
-enum class EMLResult
-{
-    ConvFwd = EMLAlgorithm::ConvFwd,
-    ConvBwdData = EMLAlgorithm::ConvBwdData,
-};
 
 USTRUCT()
 struct VACTML_API FMLContext
 {
     GENERATED_BODY()
     
-    _VACT_SIZE_T SizeOf;
-    cudnnHandle_t Handle;
-    void* Bytes;
 };
+
+USTRUCT()
+struct VACTML_API FMLShape
+{
+    uint32
+}
+
+USTRUCT()
+struct VACTML_API FMLEmbed
+{
+
+}
 
 USTRUCT()
 struct VACTML_API FMLTensor
 {
     GENERATED_BODY()
 
-    _VACT_SIZE_T SizeOf;
-    cudnnTensorDescriptor_t Desc;
-    cudnnTensorFormat_t Format;
-    cudnnDataType_t Type;
-    void* Bytes;
-};
-
-USTRUCT()
-struct VACTML_API FMLConvolution
-{
-    GENERATED_BODY()
-
-    _VACT_SIZE_T SizeOf;
-    cudnnConvolutionDescriptor_t Desc;
-    cudnnConvolutionMode_t Mode;
-    cudnnDataType_t Type;
-    void* Bytes;
-};
-
-USTRUCT()
-struct VACTML_API FMLKernel
-{
-    GENERATED_BODY()
-
-    _VACT_SIZE_T SizeOf;
-    cudnnFilterDescriptor_t Desc;
-    cudnnTensorFormat_t Format;
-    cudnnDataType_t Type;
-    void* Bytes;
-};
-
-USTRUCT()
-struct VACTML_API FMLAlgorithm
-{
-    GENERATED_BODY()
-
-    _VACT_SIZE_T SizeOf;
-    cudnnAlgorithmDescriptor_t Desc;
-    EMLAlgorithm Type;
-    union 
-    {
-        cudnnConvolutionFwdAlgo_t ConvFwd;
-        cudnnConvolutionBwdFilterAlgo_t ConvBwdFilter;
-        cudnnConvolutionBwdDataAlgo_t ConvBwdData;
-        cudnnRNNAlgo_t ConvRNN;
-        cudnnCTCLossAlgo_t ConvCTCLoss;
-    };
-    void* Bytes;
-};
-
-USTRUCT()
-struct VACTML_API FMLResult
-{
-    GENERATED_BODY()
-    
-    _VACT_SIZE_T SizeOf;
-    int32 Count;
-    int32 MaxCount;
-    EMLResult Type;
-    union
-    {
-        cudnnConvolutionFwdAlgoPerf_t ConvFwd;
-        cudnnConvolutionBwdDataAlgoPerf_t ConvBwdData;
-        void* Bytes;
-    };
 };
 
 USTRUCT()
 struct VACTML_API FMLActivation
 {
     GENERATED_BODY()
-    float Alpha[1];
-    float Beta[1];
-    cudnnActivationDescriptor_t Desc;
-    cudnnActivationMode_t Mode;
-    cudnnNanPropagation_t Propagation;
-};
 
-USTRUCT()
-struct VACTML_API FMLDevice
-{
-    GENERATED_BODY()
-
-    int32 Id;
-    int32 Index;
-    cudaDeviceProp Specs;
-};
-
-USTRUCT()
-struct VACTML_API FMLInstance
-{
-    GENERATED_BODY()
-
-    _VACT_SIZE_T SizeOf;
-    cudnnConvolutionDescriptor_t Desc;
-    void* Bytes;
-};
-
-USTRUCT()
-struct VACTML_API FMLCPU
-{
-    GENERATED_BODY()
-    
-    _VACT_SIZE_T SizeOf;
-    void* Bytes;
 };
 
 UENUM()

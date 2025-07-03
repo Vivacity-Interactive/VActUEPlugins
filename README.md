@@ -55,11 +55,21 @@ Allows to communicate with COM devices and Bluetooth, tested with Arduino simple
 ![Static Badge](https://img.shields.io/badge/Note-blue)
 _Bluetooth is still incomplete, need to setup connection protocol and test, listing available devices is already successful, also still resolving best usage approach_
 
-## VActML
+## VActCuDNN
 This is still work in progress, attempt to bring more native ML to unreal engine, but this may cause GPU resource competition. best may be to hook into UE intial support with Cuda and CuDNN duable.
 
 ![Static Badge](https://img.shields.io/badge/Note-blue)
 _similar attempt using tensorflow direct support, however tensorflow core packag had some compilation flag issues, and tensorflow full library depends on pythorgh and python compilation, this last dependecy I prefer to avoid_
+
+## VActML
+This is still work in progress, attempt to bring more native ML to unreal engine, independed of too many external frameworks and packages for runtime use. earliest focuses will be by order.
+- Proximal Policy Optimization (PPO)
+- Proximal Policy Optimization 2 (PPO2)
+- Continuous K-Nearest Neighbour (CKNN) 
+- Large Language Model (LLM) Minimal Base Implementation
+
+![Static Badge](https://img.shields.io/badge/Note-blue)
+_will also attempt to focus on including compute shader versions of algorigms, maybe tensor shader, or abusing other shaders_
 
 ### Install
 Download ``ThirdParty`` Source Folder. Unpack the downloaded third party folder into ``VActML/Source/``. It contains Cuda and CuDNN dependencies.
