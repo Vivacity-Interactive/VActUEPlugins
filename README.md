@@ -62,6 +62,14 @@ This is still work in progress, attempt to bring more native ML to unreal engine
 ![Static Badge](https://img.shields.io/badge/Note-blue)
 _similar attempt using tensorflow direct support, however tensorflow core packag had some compilation flag issues, and tensorflow full library depends on pythorgh and python compilation, this last dependecy I prefer to avoid_
 
+### Install
+Download ``ThirdParty`` Source Folder. Unpack the downloaded third party folder into ``VActCuDNN/Source/``. It contains Cuda and CuDNN dependencies.
+
+![Static Badge](https://img.shields.io/badge/Note-blue)
+_I may rewrite it to depend on the general SDK installation of Cuda and CuDNN, depending on Path settings and System Variables, this current take is an attempt to make it somewhat stand alone_
+
+- [VActCuDNN_Source_ThirdParty.zip](https://drive.google.com/file/d/1gFahD7kSydta6d4YZs3LgYqo54lmAFfP/view?usp=sharing "ThirdParty zip file dependencies")
+
 ## VActML
 This is still work in progress, attempt to bring more native ML to unreal engine, independed of too many external frameworks and packages for runtime use. earliest focuses will be by order.
 - Proximal Policy Optimization (PPO)
@@ -71,14 +79,6 @@ This is still work in progress, attempt to bring more native ML to unreal engine
 
 ![Static Badge](https://img.shields.io/badge/Note-blue)
 _will also attempt to focus on including compute shader versions of algorithms, maybe tensor shader if internally accessible by unreal engine, or abusing other shaders that may be isomorphic in behaviour_
-
-### Install
-Download ``ThirdParty`` Source Folder. Unpack the downloaded third party folder into ``VActCuDNN/Source/``. It contains Cuda and CuDNN dependencies.
-
-![Static Badge](https://img.shields.io/badge/Note-blue)
-_I may rewrite it to depend on the general SDK installation of Cuda and CuDNN, depending on Path settings and System Variables, this current take is an attempt to make it somewhat stand alone_
-
-- [VActCuDNN_Source_ThirdParty.zip](https://drive.google.com/file/d/1gFahD7kSydta6d4YZs3LgYqo54lmAFfP/view?usp=sharing "ThirdParty zip file dependencies")
 
 ## VActVR
 VR C++ implementation, and Contains default blueprint derivatives 
