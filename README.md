@@ -70,7 +70,7 @@ This is still work in progress, attempt to bring more native ML to unreal engine
 - Large Language Model (LLM) Minimal Base Implementation
 
 ![Static Badge](https://img.shields.io/badge/Note-blue)
-_will also attempt to focus on including compute shader versions of algorigms, maybe tensor shader, or abusing other shaders_
+_will also attempt to focus on including compute shader versions of algorithms, maybe tensor shader if internally accessible by unreal engine, or abusing other shaders that may be isomorphic in behaviour_
 
 ### Install
 Download ``ThirdParty`` Source Folder. Unpack the downloaded third party folder into ``VActCuDNN/Source/``. It contains Cuda and CuDNN dependencies.
