@@ -107,7 +107,7 @@ public class VActCuDNN : ModuleRules
 		PrivateIncludePaths.AddRange(
 			new string[] {
 				"ThirdParty/Cuda/Public",
-				"ThirdParty/CuDNN/Public"
+				"ThirdParty/CuDNN/Public",
 				// ... add other private include paths required here ...
 			}
 			);
@@ -117,7 +117,7 @@ public class VActCuDNN : ModuleRules
 			new string[]
 			{
 				"Core",
-				"Projects"
+				"Projects",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);

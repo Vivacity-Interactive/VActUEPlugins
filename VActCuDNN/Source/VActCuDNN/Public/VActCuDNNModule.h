@@ -37,5 +37,5 @@ struct FVActCuDNNTests
 	static void _Debug_VActCuDNN_Test_0();
 
 	static void _Debug_VActCuDNN_Test_1();
-}
+};
 #endif;
