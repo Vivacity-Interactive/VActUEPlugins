@@ -26,7 +26,7 @@ void _FVActCuDNNTests::_Debug_Cuda_Test()
 
 	_CHECK_CUDA(cudaMalloc(&Bytes, SizeOf));
 	_CHECK_CUDA(cudaMemcpy(Bytes, &Data, SizeOf, cudaMemcpyHostToDevice))
-		_CHECK_CUDA(cudaFree(Bytes));
+	_CHECK_CUDA(cudaFree(Bytes));
 
 	UE_LOG(LogTemp, Display, TEXT("VActCuDNN Cuda Test Success"));
 }
@@ -270,6 +270,17 @@ void _FVActCuDNNTests::_Debug_VActCuDNN_Test_1()
 	FVActCuDNN::Destroy(Context);
 
 	UE_LOG(LogTemp, Display, TEXT("VActCuDNN Test 1 Success"));
+}
+
+void _FVActCuDNNTests::Run()
+{
+	_Debug_Cuda_Test();
+	
+	_Debug_CuDNN_Test_0();
+	_Debug_VActCuDNN_Test_0();
+	
+	_Debug_CuDNN_Test_1();
+	_Debug_VActCuDNN_Test_1();
 }
 
 #endif;

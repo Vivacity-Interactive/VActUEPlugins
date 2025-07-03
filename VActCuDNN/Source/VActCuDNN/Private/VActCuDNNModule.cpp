@@ -95,11 +95,7 @@ void FVActCuDNNModule::StartupModule()
 	_VACT_LOADLIB(CuDNNAdvTrainLib, CuDNNAdvTrainLibPath, TEXT("CuDNN"));
 
 #if WITH_EDITORONLY_DATA
-	//_FVActCuDNNTests::_Debug_Cuda_Test();
-	//_FVActCuDNNTests::_Debug_CuDNN_Test_0();
-	//_FVActCuDNNTests::_Debug_CuDNN_Test_1();
-	//_FVActCuDNNTests::_Debug_VActCuDNN_Test_0();
-	//_FVActCuDNNTests::_Debug_VActCuDNN_Test_1();
+	//_FVActCuDNNTests::Run();
 #endif;
 }
 
