@@ -6,7 +6,7 @@ THIRD_PARTY_INCLUDES_START
 THIRD_PARTY_INCLUDES_END
 
 #include "CoreMinimal.h"
-#include "VActMLTypes.generated.h"
+#include "VActCuDNNTypes.generated.h"
 
 UENUM()
 enum class ECuAlgorithm

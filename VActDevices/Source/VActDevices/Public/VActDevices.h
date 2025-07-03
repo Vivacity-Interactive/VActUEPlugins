@@ -71,10 +71,11 @@
 		return;																\
 	}																		\
 }
+#define _VACT_DEVICES_PORT_UNKONWN_FORMAT TEXT("_UNKCOM%d")
 #elif PLATFORM_MAC
 
 #elif PLATFORM_LINUX
-
+#define _VACT_DEVICES_PORT_UNKONWN_FORMAT TEXT("_unktty%d")
 #endif
 
 #define _CHECK_FILE(ExpressionIn)											\
@@ -113,7 +114,7 @@ struct VACTDEVICES_API FVActDevices
 
 	static const FString PortNames[];
 
-	static const TCHAR PortUnkonwnFormat[];
+	//static const TCHAR PortUnkonwnFormat[];
 
 #if WITH_EDITORONLY_DATA
 	static void _Debug_VActDevices_Test();

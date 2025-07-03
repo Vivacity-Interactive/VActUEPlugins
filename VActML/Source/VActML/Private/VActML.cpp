@@ -68,7 +68,7 @@ void FVActML::Destroy(FMLTensor& Tensor, bool bData)
 
 void FVActML::_Unsafe_Destroy(FMLContext& Context, bool bData)
 {
-	_CHECK_CUDNN(cudnnDestroy(Context.Handle));
+	
 }
 
 void FVActML::Destroy(FMLContext& Context, bool bData)
@@ -78,7 +78,7 @@ void FVActML::Destroy(FMLContext& Context, bool bData)
 
 void FVActML::_Unsafe_Destroy(FMLActivation& Activation, bool bData)
 {
-	_CHECK_CUDNN(cudnnDestroyActivationDescriptor(Activation.Desc));
+	
 }
 
 void FVActML::Destroy(FMLActivation& Activation, bool bData)

@@ -84,7 +84,7 @@ void USerialManagerComponent::TickComponent(float DeltaTime, ELevelTick TickType
 		if (bOpen) 
 		{
 			const bool bKnownPort = 0 <= Pair.Key && Pair.Key <= _VACT_SUPPORTED_PORT_COUNT;
-			Entry.PortName = bKnownPort ? FVActDevices::PortNames[Pair.Key] : FString::Printf(FVActDevices::PortUnkonwnFormat, Pair.Key);
+			Entry.PortName = bKnownPort ? FVActDevices::PortNames[Pair.Key] : FString::Printf(_VACT_DEVICES_PORT_UNKONWN_FORMAT, Pair.Key);
 			UE_LOG(LogTemp, Log, TEXT("Opening %s"), *Entry.PortName);
 			Entry.Device = FVActDevices::Create(Entry.PortName, Entry.Rate, FDilim::Line());
 			// Also Instantiate the Protocols Here if needed (realtime support)

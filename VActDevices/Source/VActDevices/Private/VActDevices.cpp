@@ -36,7 +36,7 @@ const FString FVActDevices::PortNames[_VACT_SUPPORTED_PORT_COUNT+1] = {
 	TEXT("COM31"),
 	TEXT("COM32")
 };
-const TCHAR FVActDevices::PortUnkonwnFormat[] = TEXT("_UNKCOM%d");
+//const TCHAR FVActDevices::PortUnkonwnFormat[] = TEXT("_UNKCOM%d");
 
 //#define BTHPROTO_RFCOMM  0x0003
 //#define BTHPROTO_L2CAP   0x0100
@@ -78,7 +78,7 @@ const FString FVActDevices::PortNames[_VACT_SUPPORTED_PORT_COUNT + 1] = {
 	TEXT("cuau0"),
 	TEXT("cuau1")
 };
-const TCHAR FVActDevices::PortUnkonwnFormat[] = TEXT("_unktty%d");
+//const TCHAR FVActDevices::PortUnkonwnFormat[] = TEXT("_unktty%d");
 #endif
 
 #define LOCTEXT_NAMESPACE "FVActDevicesModule"

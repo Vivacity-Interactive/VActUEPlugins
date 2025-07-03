@@ -2,7 +2,7 @@
 
 #include "HAL/UnrealMemory.h"
 
-void FVActCuDNN::_Unsafe_Create(FMLDevice& Into, int32 Index)
+void FVActCuDNN::_Unsafe_Create(FCuDevice& Into, int32 Index)
 {
 	int32 MaxCount = 0;
 	if (Index < 0) { _CHECK_CUDA(cudaGetDeviceCount(&MaxCount)); Index = MaxCount - 1; }
@@ -11,14 +11,14 @@ void FVActCuDNN::_Unsafe_Create(FMLDevice& Into, int32 Index)
 	_CHECK_CUDA(cudaGetDeviceProperties(&Into.Specs, Into.Id));
 }
 
-FMLDevice FVActCuDNN::CreateDevice(int32 Index)
+FCuDevice FVActCuDNN::CreateDevice(int32 Index)
 {
-	FMLDevice Into;
+	FCuDevice Into;
 	_Unsafe_Create(Into, Index);
 	return Into;
 }
 
-void FVActCuDNN::_Unsafe_Create(TArray<FMLDevice>& Into)
+void FVActCuDNN::_Unsafe_Create(TArray<FCuDevice>& Into)
 {
 	int32 Count = 0;
 	_CHECK_CUDA(cudaGetDeviceCount(&Count));
@@ -29,27 +29,27 @@ void FVActCuDNN::_Unsafe_Create(TArray<FMLDevice>& Into)
 	}
 }
 
-TArray<FMLDevice> FVActCuDNN::CreateDevice()
+TArray<FCuDevice> FVActCuDNN::CreateDevice()
 {
-	TArray<FMLDevice> Into;
+	TArray<FCuDevice> Into;
 	_Unsafe_Create(Into);
 	return Into;
 }
 
-void FVActCuDNN::_Unsafe_Create(FMLContext& Into)
+void FVActCuDNN::_Unsafe_Create(FCuContext& Into)
 {
 	_CHECK_CUDNN(cudnnCreate(&Into.Handle));
 }
 
-FMLContext FVActCuDNN::CreateContext()
+FCuContext FVActCuDNN::CreateContext()
 {
-	FMLContext Into;
+	FCuContext Into;
 	_Unsafe_Create(Into);
 	return Into;
 }
 
 //template<cudnnDataType_t InType = CUDNN_CROSS_CORRELATION, cudnnTensorFormat_t InFormat = CUDNN_TENSOR_NHWC>
-void FVActCuDNN::_Unsafe_Create(FMLTensor& Into, int32 Width, int32 Height, int32 Size, int32 Count)
+void FVActCuDNN::_Unsafe_Create(FCuTensor& Into, int32 Width, int32 Height, int32 Size, int32 Count)
 {
 	Into.Format = CUDNN_TENSOR_NCHW;//CUDNN_TENSOR_NHWC;
 	Into.Type = CUDNN_DATA_FLOAT;
@@ -59,15 +59,15 @@ void FVActCuDNN::_Unsafe_Create(FMLTensor& Into, int32 Width, int32 Height, int3
 	_CHECK_CUDA(cudaMallocManaged(&Into.Bytes, Into.SizeOf));
 }
 
-FMLTensor FVActCuDNN::CreateTensor(int32 Width, int32 Height, int32 Size, int32 Count)
+FCuTensor FVActCuDNN::CreateTensor(int32 Width, int32 Height, int32 Size, int32 Count)
 {
-	FMLTensor Into;
+	FCuTensor Into;
 	_Unsafe_Create(Into, Width, Height, Size, Count);
 	return Into;
 }
 
 //template<cudnnDataType_t InType = CUDNN_CROSS_CORRELATION, cudnnTensorFormat_t InFormat = CUDNN_TENSOR_NHWC>
-// void FVActCuDNN::_Unsafe_Create(FMLTensor& Into, int32 N, const TArray<int32> Dims, const TArray<int32> Strids)
+// void FVActCuDNN::_Unsafe_Create(FCuTensor& Into, int32 N, const TArray<int32> Dims, const TArray<int32> Strids)
 // {
 // 	_CHECK_CUDNN(cudnnCreateTensorDescriptor(Into.Desc));
 // 	_CHECK_CUDNN(cudnnSetTensorNdDescriptor(Into.Desc, CUDNN_TENSOR_NHWC, CUDNN_DATA_FLOAT, N, *Dims, *Strids));
@@ -76,7 +76,7 @@ FMLTensor FVActCuDNN::CreateTensor(int32 Width, int32 Height, int32 Size, int32 
 // }
 
 //template<cudnnDataType_t InType = CUDNN_CROSS_CORRELATION, cudnnTensorFormat_t InFormat = CUDNN_TENSOR_NHWC>
-void FVActCuDNN::_Unsafe_Create(FMLKernel& Into, int32 Width, int32 Height, int32 SizeOut, int32 SizeIn)
+void FVActCuDNN::_Unsafe_Create(FCuKernel& Into, int32 Width, int32 Height, int32 SizeOut, int32 SizeIn)
 {
 	Into.Format = CUDNN_TENSOR_NCHW;//CUDNN_TENSOR_NHWC;
 	Into.Type = CUDNN_DATA_FLOAT;
@@ -86,15 +86,15 @@ void FVActCuDNN::_Unsafe_Create(FMLKernel& Into, int32 Width, int32 Height, int3
 	_CHECK_CUDA(cudaMallocManaged(&Into.Bytes, Into.SizeOf));
 }
 
-FMLKernel FVActCuDNN::CreateKernel(int32 Width, int32 Height, int32 SizeOut, int32 SizeIn)
+FCuKernel FVActCuDNN::CreateKernel(int32 Width, int32 Height, int32 SizeOut, int32 SizeIn)
 {
-	FMLKernel Into;
+	FCuKernel Into;
 	_Unsafe_Create(Into, Width, Height, SizeOut, SizeIn);
 	return Into;
 }
 
 //template<cudnnDataType_t InType = CUDNN_CROSS_CORRELATION, cudnnTensorFormat_t InFormat = CUDNN_TENSOR_NHWC>
-// void FVActCuDNN::_Unsafe_Create(FMLKernel& Into, int32 N, const TArray<int32> Dims)
+// void FVActCuDNN::_Unsafe_Create(FCuKernel& Into, int32 N, const TArray<int32> Dims)
 // {
 // 	_CHECK_CUDNN(cudnnCreateFilterDescriptor(Into.Desc));
 // 	_CHECK_CUDNN(cudnnSetFilterNdDescriptor(Into.Desc, CUDNN_TENSOR_NHWC, CUDNN_DATA_FLOAT, N, *Dims));
@@ -103,7 +103,7 @@ FMLKernel FVActCuDNN::CreateKernel(int32 Width, int32 Height, int32 SizeOut, int
 // }
 
 //template<cudnnDataType_t InType = CUDNN_CROSS_CORRELATION,cu cudnnConvolutionMode_t InMode = CUDNN_DATA_FLOAT>
-void FVActCuDNN::_Unsafe_Create(FMLConvolution& Into, int32 PadWidth, int32 PadHeight, int32 StrideWidth, int32 StrideHeight, int32 DilationWidth, int32 DilationHeight)
+void FVActCuDNN::_Unsafe_Create(FCuConvolution& Into, int32 PadWidth, int32 PadHeight, int32 StrideWidth, int32 StrideHeight, int32 DilationWidth, int32 DilationHeight)
 {
 	Into.Mode = CUDNN_CROSS_CORRELATION;
 	Into.Type = CUDNN_DATA_FLOAT;
@@ -111,36 +111,36 @@ void FVActCuDNN::_Unsafe_Create(FMLConvolution& Into, int32 PadWidth, int32 PadH
 	_CHECK_CUDNN(cudnnSetConvolution2dDescriptor(Into.Desc, PadHeight, PadWidth, StrideHeight, StrideWidth, DilationHeight, DilationWidth, Into.Mode, Into.Type));
 }
 
-FMLConvolution FVActCuDNN::CreateConvolution(int32 PadWidth, int32 PadHeight, int32 StrideWidth, int32 StrideHeight, int32 DilationWidth, int32 DilationHeight)
+FCuConvolution FVActCuDNN::CreateConvolution(int32 PadWidth, int32 PadHeight, int32 StrideWidth, int32 StrideHeight, int32 DilationWidth, int32 DilationHeight)
 {
-	FMLConvolution Into;
+	FCuConvolution Into;
 	_Unsafe_Create(Into, PadWidth, PadHeight, StrideWidth, StrideHeight, DilationHeight, DilationWidth);
 	return Into;
 }
 
 //template<cudnnDataType_t InType = CUDNN_CROSS_CORRELATION, cudnnConvolutionMode_t InMode = CUDNN_DATA_FLOAT>
-// void FVActCuDNN::_Unsafe_Create(FMLConvolution& Into, int32 N, const TArray<int32> Pads, const TArray<int32> Strids, const TArray<int32> Dilations)
+// void FVActCuDNN::_Unsafe_Create(FCuConvolution& Into, int32 N, const TArray<int32> Pads, const TArray<int32> Strids, const TArray<int32> Dilations)
 // {
 // 	_CHECK_CUDNN(cudnnCreateConvolotion(Into.Desc));
 // 	_CHECK_CUDNN(cudnnSetConvolutionNdDescriptor(Into.Desc, N, *Pads, *Strids, *Dilations, CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT));
 // }
 
-void FVActCuDNN::_Unsafe_Create(FMLAlgorithm& Into, FMLContext& Context, FMLTensor& Input, FMLKernel& Kernel, FMLConvolution& Convolution, FMLTensor& Output, FMLResult& Result, int32 LimitCount, bool bAllowShringking)
+void FVActCuDNN::_Unsafe_Create(FCuAlgorithm& Into, FCuContext& Context, FCuTensor& Input, FCuKernel& Kernel, FCuConvolution& Convolution, FCuTensor& Output, FCuResult& Result, int32 LimitCount, bool bAllowShringking)
 {
-	Into.Type = EMLAlgorithm::ConvFwd;
-	Result.Type = EMLResult::ConvFwd;
+	Into.Type = ECuAlgorithm::ConvFwd;
+	Result.Type = ECuResult::ConvFwd;
 	_CHECK_CUDNN(cudnnGetConvolutionForwardAlgorithmMaxCount(Context.Handle, &Result.MaxCount));
 	_CHECK_CUDNN(cudnnFindConvolutionForwardAlgorithm(Context.Handle, Input.Desc, Kernel.Desc, Convolution.Desc, Output.Desc, LimitCount, &Result.Count, &Result.ConvFwd));
 }
 
-FMLAlgorithm FVActCuDNN::CreateAlgorithm(FMLContext& Context, FMLTensor& Input, FMLKernel& Kernel, FMLConvolution& Convolution, FMLTensor& Output, FMLResult& Result, int32 Count, bool bAllowShringking)
+FCuAlgorithm FVActCuDNN::CreateAlgorithm(FCuContext& Context, FCuTensor& Input, FCuKernel& Kernel, FCuConvolution& Convolution, FCuTensor& Output, FCuResult& Result, int32 Count, bool bAllowShringking)
 {
-	FMLAlgorithm Into;
+	FCuAlgorithm Into;
 	_Unsafe_Create(Into, Context, Input, Kernel, Convolution, Output, Result, Count, bAllowShringking);
 	return Into;
 }
 
-void FVActCuDNN::_Unsafe_Create(FMLActivation& Into, FMLTensor& Input, FMLTensor& Output, float Alpha, float Beta, double Gamma)
+void FVActCuDNN::_Unsafe_Create(FCuActivation& Into, FCuTensor& Input, FCuTensor& Output, float Alpha, float Beta, double Gamma)
 {
 	Into.Mode = CUDNN_ACTIVATION_SIGMOID;
 	Into.Propagation = CUDNN_NOT_PROPAGATE_NAN;
@@ -151,14 +151,14 @@ void FVActCuDNN::_Unsafe_Create(FMLActivation& Into, FMLTensor& Input, FMLTensor
 	_CHECK_CUDNN(cudnnSetActivationDescriptor(Into.Desc, Into.Mode, Into.Propagation, Gamma));
 }
 	
-FMLActivation FVActCuDNN::CreateActivation(FMLTensor& Input, FMLTensor& Output, float Alpha, float Beta, double Gamma)
+FCuActivation FVActCuDNN::CreateActivation(FCuTensor& Input, FCuTensor& Output, float Alpha, float Beta, double Gamma)
 {
-	FMLActivation Into;
+	FCuActivation Into;
 	_Unsafe_Create(Into, Input, Output, Alpha, Beta, Gamma);
 	return Into;
 }
 
-void FVActCuDNN::_Unsafe_Create(FMLInstance& Into, FMLContext& Context, FMLTensor& Input, FMLKernel& Kernel, FMLConvolution& Convolution, FMLTensor& Output, FMLAlgorithm& Algorithm, TArray<float> KernelData, int32 DefaultByte)
+void FVActCuDNN::_Unsafe_Create(FCuInstance& Into, FCuContext& Context, FCuTensor& Input, FCuKernel& Kernel, FCuConvolution& Convolution, FCuTensor& Output, FCuAlgorithm& Algorithm, TArray<float> KernelData, int32 DefaultByte)
 {
 	_CHECK_CUDNN(cudnnGetConvolutionForwardWorkspaceSize(Context.Handle, Input.Desc, Kernel.Desc, Convolution.Desc, Output.Desc, Algorithm.ConvFwd, &Into.SizeOf));
 	_CHECK_CUDA(cudaMalloc(&Into.Bytes, Into.SizeOf));
@@ -170,113 +170,113 @@ void FVActCuDNN::_Unsafe_Create(FMLInstance& Into, FMLContext& Context, FMLTenso
 	_CHECK_CUDA(cudaMemcpy(Kernel.Bytes, KernelData.GetData(), Kernel.SizeOf, cudaMemcpyHostToDevice));
 }
 
-FMLInstance FVActCuDNN::CreateInstance(FMLContext& Context, FMLTensor& Input, FMLKernel& Kernel, FMLConvolution& Convolution, FMLTensor& Output, FMLAlgorithm& Algorithm, TArray<float> KernelData, int32 DefaultByte)
+FCuInstance FVActCuDNN::CreateInstance(FCuContext& Context, FCuTensor& Input, FCuKernel& Kernel, FCuConvolution& Convolution, FCuTensor& Output, FCuAlgorithm& Algorithm, TArray<float> KernelData, int32 DefaultByte)
 {
-	FMLInstance Into;
+	FCuInstance Into;
 	_Unsafe_Create(Into, Context, Input, Kernel, Convolution, Output, Algorithm, KernelData, DefaultByte);
 	return Into;
 }
 
-void FVActCuDNN::_Unsafe_Use(const FMLDevice& Device)
+void FVActCuDNN::_Unsafe_Use(const FCuDevice& Device)
 {
 	_CHECK_CUDA(cudaSetDevice(Device.Index));
 }
 
-void FVActCuDNN::Use(const FMLDevice& Device)
+void FVActCuDNN::Use(const FCuDevice& Device)
 {
 	_Unsafe_Use(Device);
 }
 
-void FVActCuDNN::_Unsafe_Forward(const FMLContext& Context, FMLActivation& Activation, FMLTensor& Input, FMLTensor& Output)
+void FVActCuDNN::_Unsafe_Forward(const FCuContext& Context, FCuActivation& Activation, FCuTensor& Input, FCuTensor& Output)
 {
 	_CHECK_CUDNN(cudnnActivationForward(Context.Handle, Activation.Desc, Activation.Alpha, Input.Desc, Input.Bytes, Activation.Beta, Output.Desc, Output.Bytes));
 }
 
-void FVActCuDNN::Forward(const FMLContext& Context, FMLActivation& Activation, FMLTensor& Input, FMLTensor& Output)
+void FVActCuDNN::Forward(const FCuContext& Context, FCuActivation& Activation, FCuTensor& Input, FCuTensor& Output)
 {
 	_Unsafe_Forward(Context, Activation, Input, Output);
 }
 
-// void FVActCuDNN::_Unsafe_Use(FMLInstance& Instance)
+// void FVActCuDNN::_Unsafe_Use(FCuInstance& Instance)
 // {
 // 	_CHECK_CUDNN(cudnnConvolutionForward(Instance.Context, Alpha, Instance.Input, Instance.InputData, Instance.Kernel, Instance.Kernel, Instance.KernelData, Instance.Convolution, Instance.Algorithm, Instance.Bytes, Instance.SizeOf, Beta, Instance.Output, Instance.OutputData));
 // }
 
-// FMLInstance& FVActCuDNN::Use(FMLInstance& Instance)
+// FCuInstance& FVActCuDNN::Use(FCuInstance& Instance)
 // {
 // 	_Unsafe_Use(Instance);
 // 	return Instance;
 // }
 
-// void FVActCuDNN::_Unsafe_Create(FMLInstance& Into, FMLContext& Context, TArray<float> InputData, TArray<float> OutputData, FMLConvolution& Convolution, FMLAlgorithm& Algorithm, int32 Size, int32 Count = 1)
+// void FVActCuDNN::_Unsafe_Create(FCuInstance& Into, FCuContext& Context, TArray<float> InputData, TArray<float> OutputData, FCuConvolution& Convolution, FCuAlgorithm& Algorithm, int32 Size, int32 Count = 1)
 // {
-// 	FMLTensor Input, Output;
+// 	FCuTensor Input, Output;
 // 	_Unsafe_Create(Input, )
 // }
 
-void FVActCuDNN::_Unsafe_Destroy(FMLKernel& Kernel, bool bData)
+void FVActCuDNN::_Unsafe_Destroy(FCuKernel& Kernel, bool bData)
 {
 	if (bData) { _CHECK_CUDA(cudaFree(Kernel.Bytes)); Kernel.Bytes = nullptr; }
 	_CHECK_CUDNN(cudnnDestroyFilterDescriptor(Kernel.Desc));
 }
 
-void FVActCuDNN::Destroy(FMLKernel& Kernel, bool bData)
+void FVActCuDNN::Destroy(FCuKernel& Kernel, bool bData)
 {
 	_Unsafe_Destroy(Kernel, bData);
 }
 
-void FVActCuDNN::_Unsafe_Destroy(FMLTensor& Tensor, bool bData)
+void FVActCuDNN::_Unsafe_Destroy(FCuTensor& Tensor, bool bData)
 {
 	if (bData) { _CHECK_CUDA(cudaFree(Tensor.Bytes)); Tensor.Bytes = nullptr; }
 	_CHECK_CUDNN(cudnnDestroyTensorDescriptor(Tensor.Desc));
 }
 
-void FVActCuDNN::Destroy(FMLTensor& Tensor, bool bData)
+void FVActCuDNN::Destroy(FCuTensor& Tensor, bool bData)
 {
 	_Unsafe_Destroy(Tensor, bData);
 }
 
-void FVActCuDNN::_Unsafe_Destroy(FMLConvolution& Convolution, bool bData)
+void FVActCuDNN::_Unsafe_Destroy(FCuConvolution& Convolution, bool bData)
 {
 	_CHECK_CUDNN(cudnnDestroyConvolutionDescriptor(Convolution.Desc));
 }
 
-void FVActCuDNN::Destroy(FMLConvolution& Convolution, bool bData)
+void FVActCuDNN::Destroy(FCuConvolution& Convolution, bool bData)
 {
 	_Unsafe_Destroy(Convolution, bData);
 }
 
-void FVActCuDNN::_Unsafe_Destroy(FMLAlgorithm& Algorithm, bool bData)
+void FVActCuDNN::_Unsafe_Destroy(FCuAlgorithm& Algorithm, bool bData)
 {
 	_CHECK_CUDNN(cudnnDestroyAlgorithmDescriptor(Algorithm.Desc));
 }
 
-void FVActCuDNN::Destroy(FMLAlgorithm& Algorithm, bool bData)
+void FVActCuDNN::Destroy(FCuAlgorithm& Algorithm, bool bData)
 {
 	_Unsafe_Destroy(Algorithm, bData);
 }
 
-// void FVActCuDNN::_Unsafe_Destroy(FMLWorkspace& Workspace, bool bData)
+// void FVActCuDNN::_Unsafe_Destroy(FCuWorkspace& Workspace, bool bData)
 // {
 // 	if (bData) { _CHECK_CUDA(cudaFree(Workspace.Bytes)); Workspace.Bytes = nullptr; }
 // }
 
-// void FVActCuDNN::Destroy(FMLWorkspace& Workspace, bool bData)
+// void FVActCuDNN::Destroy(FCuWorkspace& Workspace, bool bData)
 // {
 // 	_Unsafe_Destroy(Workspace, bData);
 // }
 
-void FVActCuDNN::_Unsafe_Destroy(FMLContext& Context, bool bData)
+void FVActCuDNN::_Unsafe_Destroy(FCuContext& Context, bool bData)
 {
 	_CHECK_CUDNN(cudnnDestroy(Context.Handle));
 }
 
-void FVActCuDNN::Destroy(FMLContext& Context, bool bData)
+void FVActCuDNN::Destroy(FCuContext& Context, bool bData)
 {
 	_Unsafe_Destroy(Context, bData);
 }
 
-// static void FVActCuDNN::_Unsafe_Destroy(FMLInstance& Instance, bool bData, bool bContext)
+// static void FVActCuDNN::_Unsafe_Destroy(FCuInstance& Instance, bool bData, bool bContext)
 // {
 //	_Unsafe_Destory(Instance.Input, bData, false);
 //	_Unsafe_Destory(Instance.Output, bData, false);
@@ -288,53 +288,53 @@ void FVActCuDNN::Destroy(FMLContext& Context, bool bData)
 //	if(bContext) { _Unsafe_Destory(Instance.Context); }
 // }
 
-// static void FVActCuDNN::_Unsafe_Destroy(FMLInstance& Instance, bool bData, bool bContext)
+// static void FVActCuDNN::_Unsafe_Destroy(FCuInstance& Instance, bool bData, bool bContext)
 // {
 // 	_Unsafe_Destory(Instance, bData, bContext);
 // }
 
-void FVActCuDNN::_Unsafe_Destroy(FMLDevice& Device, bool bData)
+void FVActCuDNN::_Unsafe_Destroy(FCuDevice& Device, bool bData)
 {
 }
 
-void FVActCuDNN::Destroy(FMLDevice& Device, bool bData)
+void FVActCuDNN::Destroy(FCuDevice& Device, bool bData)
 {
 	_Unsafe_Destroy(Device, bData);
 }
 
 
-void FVActCuDNN::_Unsafe_Destroy(FMLResult& Result, bool bData)
+void FVActCuDNN::_Unsafe_Destroy(FCuResult& Result, bool bData)
 {
 	//if (bData){ _CHECK_CUDNN(cudnnDestroyAlgorithmPerformance(Result.ConvFwd, Result.Count)); }
 }
 
-void FVActCuDNN::Destroy(FMLResult& Result, bool bData)
+void FVActCuDNN::Destroy(FCuResult& Result, bool bData)
 {
 	_Unsafe_Destroy(Result, bData);
 }
 
-void FVActCuDNN::_Unsafe_Destroy(FMLActivation& Activation, bool bData)
+void FVActCuDNN::_Unsafe_Destroy(FCuActivation& Activation, bool bData)
 {
 	_CHECK_CUDNN(cudnnDestroyActivationDescriptor(Activation.Desc));
 }
 
-void FVActCuDNN::Destroy(FMLActivation& Activation, bool bData)
+void FVActCuDNN::Destroy(FCuActivation& Activation, bool bData)
 {
 	_Unsafe_Destroy(Activation, bData);
 }
 
 
-//void FVActCuDNN::_Unsafe_Save(const FMLFormatSafetensorHeader& Model, EMLFormatSafetensor Format)
+//void FVActCuDNN::_Unsafe_Save(const FCuFormatSafetensorHeader& Model, ECuFormatSafetensor Format)
 //{
 //	switch (Format)
 //	{
-//	case EMLFormatSafetensor::JSon:
+//	case ECuFormatSafetensor::JSon:
 //		/* code */
 //		break;
-//	case EMLFormatSafetensor::Binary:
+//	case ECuFormatSafetensor::Binary:
 //		/* code */
 //		break;
-//	case EMLFormatSafetensor::VActBinary:
+//	case ECuFormatSafetensor::VActBinary:
 //		/* code */
 //		break;
 //	default:
@@ -343,29 +343,29 @@ void FVActCuDNN::Destroy(FMLActivation& Activation, bool bData)
 //}
 
 
-//void FVActCuDNN::Save(const FMLFormatSafetensorHeader& Model, EMLFormatSafetensor Format)
+//void FVActCuDNN::Save(const FCuFormatSafetensorHeader& Model, ECuFormatSafetensor Format)
 //{
 //	_Unsafe_Save(Activation, bData);
 //}
 //
-//void FVActCuDNN::_Unsafe_Load(FMLFormatSafetensorHeader& Into, EMLFormatSafetensor Format)
+//void FVActCuDNN::_Unsafe_Load(FCuFormatSafetensorHeader& Into, ECuFormatSafetensor Format)
 //{
 //	switch (Format)
 //	{
-//	case EMLFormatSafetensor::JSon:
+//	case ECuFormatSafetensor::JSon:
 //		/* code */
 //		break;
-//	case EMLFormatSafetensor::Binary:
+//	case ECuFormatSafetensor::Binary:
 //		/* code */
 //		break;
-//	case EMLFormatSafetensor::VActBinary:
+//	case ECuFormatSafetensor::VActBinary:
 //		/* code */
 //		break;
 //	default:
 //		break
 //}
 //
-//void FVActCuDNN::Load(FMLFormatSafetensorHeader& Into, EMLFormatSafetensor Format)
+//void FVActCuDNN::Load(FCuFormatSafetensorHeader& Into, ECuFormatSafetensor Format)
 //{
 //	_Unsafe_Load(Activation, bData);
 //}
