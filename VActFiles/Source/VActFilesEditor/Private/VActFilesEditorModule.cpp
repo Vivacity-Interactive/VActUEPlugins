@@ -10,8 +10,8 @@ void FVActFilesEditorModule::StartupModule()
     IConsoleManager& ConsoleManager = IConsoleManager::Get();
     
     ConsoleManager.RegisterConsoleCommand(
-        TEXT("VActExportSelectedMeshes"),
-        TEXT("Exports selected static meshes to FBX, Usage: VActExportSelectedMeshes <Path> [PromptAll|NoPrompt|PromptOnce]"),
+        TEXT("VActExportSelectedStaticMeshes"),
+        TEXT("Exports selected static meshes to FBX, Usage: VActExportSelectedStaticMeshes <Path> [PromptAll|NoPrompt|PromptOnce]"),
         FConsoleCommandWithArgsDelegate::CreateStatic(&FVActFilesEditor::Cmd_ExportSelectedStaticMeshes),
         ECVF_Default
     );
