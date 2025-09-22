@@ -8,6 +8,7 @@ const TArray<FName> FOICObject::AssetTypes = {
 	TEXT("Data"),
 	TEXT("Audio"),
 	TEXT("System"),
+	TEXT("Collider"),
 };
 
 const TMap<FName, EOICAsset> FOICObject::MapAssetType = {
@@ -18,6 +19,23 @@ const TMap<FName, EOICAsset> FOICObject::MapAssetType = {
 	{ AssetTypes[(int32)EOICAsset::Data], EOICAsset::Data },
 	{ AssetTypes[(int32)EOICAsset::Audio], EOICAsset::Audio },
 	{ AssetTypes[(int32)EOICAsset::System], EOICAsset::System },
+	{ AssetTypes[(int32)EOICAsset::Collider], EOICAsset::Collider },
+};
+
+const TArray<FName> FOICObject::ShapeTypes = {
+	TEXT("None"),
+	TEXT("Box"),
+	TEXT("Sphere"),
+	TEXT("Capsule"),
+	TEXT("Convex"),
+};
+
+const TMap<FName, EOICShape> FOICObject::MapShapeType = {
+	{ ShapeTypes[(int32)EOICShape::None], EOICShape::None },
+	{ ShapeTypes[(int32)EOICShape::Box], EOICShape::Box },
+	{ ShapeTypes[(int32)EOICShape::Sphere], EOICShape::Sphere },
+	{ ShapeTypes[(int32)EOICShape::Capsule], EOICShape::Capsule },
+	{ ShapeTypes[(int32)EOICShape::Convex], EOICShape::Convex },
 };
 
 const TArray<FName> FOICValue::ValueTypes = {

@@ -38,7 +38,6 @@ class VACTOIC_API AOICManagerActor : public AActor
 
 	//static const TCHAR ObjNameFormatP[];
 
-
 	TMap<_FOICCacheProfileEntry, TWeakObjectPtr<UOICProfile>> ProfileCache;
 
 public:
@@ -82,6 +81,8 @@ public:
 
 	//void UpdateISMComponent(UWorld* World, UInstancedStaticMeshComponent* ISMComponent, FOICProfileEntry& Profile);
 
+	void UpdateOrInstantiateCollider(UWorld* World, const FOICObject& Object, const FOICInstance& Instance, FOICProfileEntry& Profile);
+
 	void UpdateActor(UWorld* World, AActor* Actor, const FOICObject& Object, const FOICInstance& Instance, FOICProfileEntry& Profile, bool bInstanceMate, bool bObjectMeta);
 
 protected:
@@ -96,4 +97,9 @@ protected:
 	void _UpdateActorParent(AActor* Actor, FOICProfileEntry& Profile);
 
 	void _CreateDefaultRootComponet(AActor* Actor);
+
+private:
+	void _BeforeUpdateProfile(FOICProfileEntry& Profile);
+
+	EOICShape _ResolveColliderShapePrefix(const FString& Name) const;
 };

@@ -4,6 +4,7 @@
 
 #include "Engine/OverlapResult.h"
 #include "Engine/HitResult.h"
+#include "Components/SceneComponent.h"
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
@@ -11,6 +12,7 @@
 
 struct FOverlapResult;
 struct FHitResult;
+class USceneComponent;
 
 USTRUCT()
 struct VACTBASE_API FVActBase
@@ -356,4 +358,6 @@ struct VACTBASE_API FVActBase
     static FCollisionQueryParams _ConfigureCollisionParams(const UObject* WorldContextObject, FName InTraceTag, const TArray<AActor*>& Filter, bool bIgnoreSelf = false, bool bTraceComplex = false);
 
     static void CreateDefaultRootComponet(AActor* Actor);
+
+    static USceneComponent* ConstructDefaultRootComponet(AActor* Actor);
 };

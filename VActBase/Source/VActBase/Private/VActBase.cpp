@@ -6,6 +6,19 @@
 
 const FName FVActBase::_DefaultRootName = TEXT("DefaultRootComponent");
 
+USceneComponent* FVActBase::ConstructDefaultRootComponet(AActor* Actor)
+{
+	USceneComponent* _DefaultRoot = nullptr;
+	if (Actor)
+	{
+		UClass* ComponentClass = USceneComponent::StaticClass();
+		FName NewName = MakeUniqueObjectName(Actor, ComponentClass, _DefaultRootName);
+		_DefaultRoot = Actor->CreateDefaultSubobject<USceneComponent>(NewName);;
+		if (_DefaultRoot) { _DefaultRoot->SetupAttachment(Actor->GetDefaultAttachComponent()); }
+	}
+	return _DefaultRoot;
+}
+
 void FVActBase::CreateDefaultRootComponet(AActor* Actor)
 {
 	if (Actor)

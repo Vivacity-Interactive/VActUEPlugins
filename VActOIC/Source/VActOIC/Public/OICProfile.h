@@ -9,6 +9,16 @@
 #include "OICProfile.generated.h"
 
 UENUM()
+enum class EOICShape
+{
+	None = 0,
+	Box,
+	Sphere,
+	Capsule,
+	Convex,
+};
+
+UENUM()
 enum class EOICAsset
 {
 	None = 0,
@@ -18,6 +28,7 @@ enum class EOICAsset
 	Data,
 	Audio,
 	System,
+	Collider,
 };
 
 UENUM()
@@ -55,6 +66,11 @@ struct VACTOIC_API FOICTracker
 	TWeakObjectPtr<AActor> Actor;
 
 	UPROPERTY()
+	TWeakObjectPtr<USceneComponent> Component;
+
+	// Maybe set this as a UObject instead
+
+	UPROPERTY()
 	int32 Index;
 };
 
@@ -67,6 +83,8 @@ struct VACTOIC_API FOICProfileEntry
 	TMap<FName, FOICTracker> Trackers;
 
 	TMap<FName, TWeakObjectPtr<UInstancedStaticMeshComponent>> ISMCs;
+
+	TMap<FName, TWeakObjectPtr<AActor>> Colliders;
 
 	TMap<FName, TObjectPtr<UObject>> Datas;
 
@@ -87,6 +105,12 @@ struct VACTOIC_API FOICProfileEntry
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	uint8 bClear : 1;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	uint8 bUseColliderShapePrefix : 1;
+
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	//TObjectPtr<UOICFormatProfile> Format;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<UOICProfile> Class;
@@ -241,10 +265,17 @@ struct VACTOIC_API FOICObject
 
 	static const TMap<FName, EOICAsset> MapAssetType;
 
+	static const TArray<FName> ShapeTypes;
+
+	static const TMap<FName, EOICShape> MapShapeType;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EOICAsset Type;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Type==EOICAsset::Mesh || Type==EOICAsset::Particle", EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Type==EOICAsset::Collider", EditConditionHides))
+	EOICShape Shape;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (EditCondition = "Type==EOICAsset::Mesh || Type==EOICAsset::Particle || Type==EOICAsset::Collider", EditConditionHides))
 	TObjectPtr<UStaticMesh> Mesh;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta  = (EditCondition = "Type==EOICAsset::Actor", EditConditionHides))
