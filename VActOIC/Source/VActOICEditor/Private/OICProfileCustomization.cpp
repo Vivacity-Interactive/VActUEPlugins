@@ -33,6 +33,7 @@ const TArray<FName> FOICProfileCustomization::PropertyNames = {
 	FName(TEXT("Metas")),
 	FName(TEXT("Meta")),
 	FName(TEXT("Type")),
+	//FName(TEXT("Shape")),
 	FName(TEXT("Value")),
 	FName(TEXT("Axis")),
 	FName(TEXT("Version")),
@@ -51,6 +52,7 @@ enum class _EPropName
 	Metas,
 	Meta,
 	Type,
+	//Shape,
 	Value,
 	Axis,
 	Version,
@@ -133,11 +135,13 @@ bool FOICProfileCustomization::ParseFromCursorsJsonStrict(class UOICProfile* InC
 	{
 		FOICObject Object;
 		bValid &= FVactTextParseUtils::ParseEnum(Object.Type, It += 2, FOICObject::MapAssetType);
+		//bValid &= FVactTextParseUtils::ParseEnum(Object.Shape, It += 2, FOICObject::MapShapeType);
 		switch (Object.Type)
 		{
 		case EOICAsset::Actor:
 			bValid &= FVactTextParseUtils::ParseClass(Object.Actor, It += 2, AActor::StaticClass(), InContext);
 			break;
+		case EOICAsset::Collider:
 		case EOICAsset::Particle:
 		case EOICAsset::Mesh:
 			bValid &= FVactTextParseUtils::ParseObject(Object.Mesh, It += 2, UStaticMesh::StaticClass(), InContext);
@@ -277,9 +281,11 @@ bool FOICProfileCustomization::ComposeToCursorsCompact(class UOICProfile* InCont
 	{
 		FVActComposeUtils::ComposeStructOpen(Root.Cursors);
 		FVActComposeUtils::ComposeEnum(Object.Type, Root.Cursors, FOICObject::AssetTypes);
+		//FVActComposeUtils::ComposeEnum(Object.Shape, Root.Cursors, FOICObject::ShapeTypes);
 		switch (Object.Type)
 		{
 		case EOICAsset::Actor: FVActComposeUtils::Compose(Object.Actor->GetPathName(), Root.Cursors); break;
+		case EOICAsset::Collider:
 		case EOICAsset::Particle:
 		case EOICAsset::Mesh: FVActComposeUtils::Compose(Object.Mesh->GetPathName(), Root.Cursors); break;
 		case EOICAsset::System:

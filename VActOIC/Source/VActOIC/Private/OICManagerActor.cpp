@@ -4,6 +4,10 @@
 #include "Kismet/GameplayStatics.h"
 #include "PhysicsEngine/BodySetup.h"
 
+#include "Engine/EngineTypes.h"
+#include "Components/BoxComponent.h"
+#include "Components/SphereComponent.h"
+#include "Components/CapsuleComponent.h"
 
 //const TCHAR AOICManagerActor::InstNameFormat[] = TEXT("%s_%d");
 //const TCHAR AOICManagerActor::InstNameFormatP[] = TEXT("%s_%s_%d");
@@ -57,7 +61,9 @@ void AOICManagerActor::ClearProfile(FOICProfileEntry& Profile, bool& bCleard)
 			if (Pair.Value.Actor.IsValid())
 			{
 				AActor* Actor = Pair.Value.Actor.Get();
+#if WITH_EDITOR
 				Actor->SetActorLabel(FGuid::NewGuid().ToString());
+#endif
 				Actor->Rename(nullptr, nullptr, REN_DontCreateRedirectors);
 				Actor->Destroy();
 				bCleard = true;
@@ -108,6 +114,7 @@ void AOICManagerActor::_UpdateProfile(UWorld* World, FOICProfileEntry& Profile)
 	const bool bObject = Profile.Object != nullptr && World != nullptr;
 	if (bObject)
 	{
+		_BeforeUpdateProfile(Profile);
 		for (const FOICInstance& Instance : Profile.Object->Instances)
 		{
 			const bool bValid = Profile.Object->Objects.IsValidIndex(Instance.Object);
@@ -120,6 +127,7 @@ void AOICManagerActor::_UpdateProfile(UWorld* World, FOICProfileEntry& Profile)
 				case EOICAsset::Mesh: UpdateOrInstantiateMesh(World, Object, Instance, Profile); break;
 				case EOICAsset::Particle: UpdateOrInstantiateParticle(World, Object, Instance, Profile); break;
 				case EOICAsset::Data: UpdateOrInstantiateData(World, Object, Instance, Profile); break;
+				case EOICAsset::Collider: UpdateOrInstantiateCollider(World, Object, Instance, Profile); break;
 				}
 			}
 		}
@@ -131,6 +139,13 @@ void AOICManagerActor::_UpdateProfile(UWorld* World, FOICProfileEntry& Profile)
 			AActor* Actor = nullptr;
 			const bool bUpdate = (ISMC = Pair.Value.Get()) != nullptr && (Actor = ISMC->GetOwner()) != nullptr;
 			if (bUpdate) { _UpdateActorParent(Actor, Profile); }
+		}
+
+		for (TPair<FName, TWeakObjectPtr<AActor>>& Pair : Profile.Colliders)
+		{
+			AActor* Collider = nullptr;
+			const bool bUpdate = (Collider = Pair.Value.Get()) != nullptr;
+			if (bUpdate) { _UpdateActorParent(Collider, Profile); }
 		}
 	}
 }
@@ -193,10 +208,12 @@ void AOICManagerActor::UpdateOrInstantiateActor(UWorld* World, const FOICObject&
 			Actor = World->SpawnActor<AActor>(Object.Actor);
 			if (Actor)
 			{
-				if (Profile.bTracked) { Profile.Trackers.Add(_InstanceFName, { Actor, -1 }); }
+				if (Profile.bTracked) { Profile.Trackers.Add(_InstanceFName, { Actor, nullptr, -1 }); }
 				Actor->SetFlags(RF_Transactional);
 				Actor->Rename(*_InstanceName, nullptr, REN_DontCreateRedirectors);
+#if WITH_EDITOR
 				Actor->SetActorLabel(_InstanceName);
+#endif
 				// Maybe OICCallback->OnInitActor(Actor, Instance, Profile);
 				bUpdateMeta = true;
 			}
@@ -231,10 +248,12 @@ void AOICManagerActor::UpdateOrInstantiateMesh(UWorld* World, const FOICObject& 
 			Actor = World->SpawnActor<AStaticMeshActor>();
 			if (Actor)
 			{
-				if (Profile.bTracked) { Profile.Trackers.Add(_InstanceFName, { Actor, -1 }); }
+				if (Profile.bTracked) { Profile.Trackers.Add(_InstanceFName, { Actor, nullptr, -1 }); }
 				Actor->SetFlags(RF_Transactional);
 				Actor->Rename(*_InstanceName, nullptr, REN_DontCreateRedirectors);
+#if WITH_EDITOR
 				Actor->SetActorLabel(_InstanceName);
+#endif
 				Actor->GetStaticMeshComponent()->SetStaticMesh(Object.Mesh);
 				// Maybe OICCallback->OnInitMesh(Actor, Instance, Profile);
 				bUpdateMeta = true;
@@ -288,8 +307,9 @@ void AOICManagerActor::UpdateOrInstantiateParticle(UWorld* World, const FOICObje
 
 					Actor->SetFlags(RF_Transactional);
 					Actor->Rename(*_ActorName, nullptr, REN_DontCreateRedirectors);
+#if WITH_EDITOR
 					Actor->SetActorLabel(_ActorName);
-					
+#endif
 					_CreateDefaultRootComponet(Actor);
 
 					//if (bObjectMeta) { UpdateOrInstantiateComponents(World, Actor, Profile.Object->Metas[Object.Meta]); }
@@ -328,7 +348,7 @@ void AOICManagerActor::UpdateOrInstantiateParticle(UWorld* World, const FOICObje
 		{
 			Index = ISMComponent->AddInstance(Instance.Transform, true);
 			// Maybe OICCallback->OnInitParticle(ISMComponent, Instance, Profile);
-			if (Profile.bTracked) { Profile.Trackers.Add(_InstanceFName, { Actor, Index }); }
+			if (Profile.bTracked) { Profile.Trackers.Add(_InstanceFName, { Actor, nullptr, Index }); }
 			bNew = true;
 		}
 	}
@@ -363,6 +383,147 @@ void AOICManagerActor::UpdateOrInstantiateData(UWorld* World, const FOICObject& 
 		}
 	}
 }
+
+void AOICManagerActor::UpdateOrInstantiateCollider(UWorld* World, const FOICObject& Object, const FOICInstance& Instance, FOICProfileEntry& Profile)
+{
+	AActor* Actor = nullptr;
+	USceneComponent* SceneComponent = nullptr;
+	int32 Index = -1;
+
+	UStaticMeshComponent* StaticMeshComponent = nullptr;
+	UShapeComponent* ShapeComponent = nullptr;
+	UBoxComponent* BoxComponent = nullptr;
+	USphereComponent* SphereComponent = nullptr;
+	UCapsuleComponent* CapsuleComponent = nullptr;
+
+	const bool bMayNotExist = Profile.bTracked || !Profile.bInitialized;
+	const bool bObjectMeta = Profile.Object->Metas.IsValidIndex(Object.Meta);
+
+	if (bMayNotExist)
+	{
+		FString _InstanceName = Profile.Parent
+			? FString::Printf(OIC_INST_NAME_FORMAT_P, *Profile.Parent.GetName(), *Object.Mesh->GetName(), Instance.Id)
+			: FString::Printf(OIC_INST_NAME_FORMAT, *Object.Mesh->GetName(), Instance.Id);
+
+		FName _InstanceFName = FName(_InstanceName);
+		FOICTracker* Tracker = Profile.Trackers.Find(_InstanceFName);
+
+		const bool bTracker = Tracker != nullptr && Tracker->Actor.IsValid();
+		if (bTracker)
+		{
+			Actor = Tracker->Actor.Get();
+			SceneComponent = Tracker->Component.Get();
+			Index = Tracker->Index;
+		}
+
+		FName _ColliderFName = Object.Mesh->GetFName();
+		TWeakObjectPtr<AActor>* ActorPtr = Profile.Colliders.Find(_ColliderFName);
+
+		bool bCollider = ActorPtr != nullptr && ActorPtr->IsValid();
+		if (!bCollider)
+		{
+			Actor = World->SpawnActor<AActor>();
+			if (Actor)
+			{
+				FString _ActorName = Profile.Parent
+					? FString::Printf(OIC_OBJ_NAME_FORMAT_P, *Profile.Parent.GetName(), *Object.Mesh->GetName())
+					: FString::Printf(OIC_OBJ_NAME_FORMAT, *Object.Mesh->GetName());
+
+				Actor->SetFlags(RF_Transactional);
+				Actor->Rename(*_ActorName, nullptr, REN_DontCreateRedirectors);
+#if WITH_EDITOR
+				Actor->SetActorLabel(_ActorName);
+#endif
+				_CreateDefaultRootComponet(Actor);
+
+				Profile.Colliders.Add(_ColliderFName, Actor);
+				bCollider = true;
+
+				//if (bObjectMeta) { UpdateOrInstantiateComponents(World, Actor, Profile.Object->Metas[Object.Meta]); }
+			}
+		}
+		else { Actor = ActorPtr->Get(); }
+
+		const bool bAdd = bCollider && Actor != nullptr && SceneComponent == nullptr;
+		if (bAdd)
+		{
+			FCollisionShape CollisionShape;
+			UClass* ComponentClass = nullptr;
+			switch (Object.Shape)
+			{
+				case EOICShape::Box: ComponentClass = UBoxComponent::StaticClass(); break;
+				case EOICShape::Sphere: ComponentClass = USphereComponent::StaticClass(); break;
+				case EOICShape::Capsule: ComponentClass = UCapsuleComponent::StaticClass(); break;
+				case EOICShape::Convex: ComponentClass = UStaticMeshComponent::StaticClass(); break;
+				default: ComponentClass = Object.Mesh != nullptr ? UStaticMeshComponent::StaticClass() : UCapsuleComponent::StaticClass(); break;
+			}
+
+			FName NewName = MakeUniqueObjectName(Actor, ComponentClass, _ColliderFName);
+			SceneComponent = NewObject<USceneComponent>(
+				Actor, ComponentClass, NewName, EObjectFlags::RF_NoFlags,
+				ComponentClass->GetDefaultObject<USceneComponent>(), false, nullptr);
+
+			const bool bComponent = SceneComponent != nullptr;
+			if (bComponent)
+			{
+				const bool bConvex = Object.Shape == EOICShape::Convex && (StaticMeshComponent = Cast<UStaticMeshComponent>(SceneComponent)) != nullptr;
+				const bool bShape = !bConvex && (ShapeComponent = Cast<UShapeComponent>(SceneComponent)) != nullptr;
+
+				if (bConvex)
+				{
+					StaticMeshComponent->SetStaticMesh(Object.Mesh);
+					StaticMeshComponent->SetHiddenInGame(true);
+					StaticMeshComponent->SetVisibility(true);
+
+					UBodySetup* BodySetup = Object.Mesh->GetBodySetup();
+					if (BodySetup) { StaticMeshComponent->SetCollisionEnabled(BodySetup->DefaultInstance.GetCollisionEnabled()); }
+				}
+				else if (bShape)
+				{
+					ShapeComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+					ShapeComponent->SetCollisionProfileName(TEXT("BlockAll"));
+				}
+
+				SceneComponent->RegisterComponent();
+				SceneComponent->AttachToComponent(Actor->GetRootComponent(), FAttachmentTransformRules::SnapToTargetIncludingScale);
+
+				Actor->AddInstanceComponent(SceneComponent);
+
+				bCollider = true;
+			}
+
+			if (Profile.bTracked) { Profile.Trackers.Add(_InstanceFName, { Actor, SceneComponent, Index }); }
+		}
+	}
+
+	const bool bUpdate = Actor != nullptr && SceneComponent != nullptr;
+	if (bUpdate)
+	{
+		const float _Correction = 50.0f;
+		
+
+		if ((StaticMeshComponent = Cast<UStaticMeshComponent>(SceneComponent)) != nullptr)
+		{
+			StaticMeshComponent->SetRelativeScale3D(Instance.Transform.GetScale3D());
+		}
+		else if ((BoxComponent = Cast<UBoxComponent>(SceneComponent)) != nullptr)
+		{
+			BoxComponent->SetBoxExtent(Instance.Transform.GetScale3D().GetAbs() * _Correction);
+		}
+		else if ((SphereComponent = Cast<USphereComponent>(SceneComponent)) != nullptr)
+		{
+			SphereComponent->SetSphereRadius(Instance.Transform.GetScale3D().GetAbsMax() * _Correction);
+		}
+		else if ((CapsuleComponent = Cast<UCapsuleComponent>(SceneComponent)) != nullptr)
+		{
+			FVector _Scale = Instance.Transform.GetScale3D().GetAbs();
+			CapsuleComponent->SetCapsuleHalfHeight(_Scale.Z * _Correction);
+			CapsuleComponent->SetCapsuleRadius(FMath::Max(_Scale.X, _Scale.Y) * _Correction);
+		}
+		SceneComponent->SetRelativeLocationAndRotation(Instance.Transform.GetLocation(), Instance.Transform.GetRotation());
+	}
+}
+
 
 void AOICManagerActor::UpdateOrInstantiateComponents(UWorld* World, AActor* Actor, FOICMeta& Meta)
 {
@@ -426,5 +587,25 @@ void AOICManagerActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 			Profile.Object->RemoveFromRoot(); Profile.Object = nullptr;
 		}
 	}
+}
 
+void AOICManagerActor::_BeforeUpdateProfile(FOICProfileEntry& Profile)
+{
+	if (Profile.bUseColliderShapePrefix)
+	{
+		for (FOICObject& Object : Profile.Object->Objects)
+		{
+			if (Object.Type == EOICAsset::Collider) { Object.Shape = _ResolveColliderShapePrefix(Object.Mesh->GetName()); }
+		}
+	}
+}
+
+EOICShape AOICManagerActor::_ResolveColliderShapePrefix(const FString& Name) const
+{
+	EOICShape Shape = EOICShape::None;
+	if (Name.StartsWith(TEXT("UBX_"))) { Shape = EOICShape::Box; }
+	else if (Name.StartsWith(TEXT("USP_"))) { Shape = EOICShape::Sphere; }
+	else if (Name.StartsWith(TEXT("UCP_"))) { Shape = EOICShape::Capsule; }
+	else if (Name.StartsWith(TEXT("UCX_"))) { Shape = EOICShape::Convex; }
+	return Shape;
 }
