@@ -1,10 +1,10 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Vivaicty Interactive, Inc. All Rights Reserved.
 
 #pragma once
 
 #include "Modules/ModuleManager.h"
 
-class FVActToonModule : public IModuleInterface
+class FVActCameraModule : public IModuleInterface
 {
 public:
 

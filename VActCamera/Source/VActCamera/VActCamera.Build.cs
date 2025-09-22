@@ -1,11 +1,10 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Some copyright should be here...
 
-using System.IO;
 using UnrealBuildTool;
 
-public class VActToon : ModuleRules
+public class VActCamera : ModuleRules
 {
-	public VActToon(ReadOnlyTargetRules Target) : base(Target)
+	public VActCamera(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 		
@@ -18,8 +17,6 @@ public class VActToon : ModuleRules
 		
 		PrivateIncludePaths.AddRange(
 			new string[] {
-                Path.Combine(GetModuleDirectory("Renderer"), "Private"),
-                Path.Combine(GetModuleDirectory("Renderer"), "Internal"),
 				// ... add other private include paths required here ...
 			}
 			);
@@ -29,6 +26,13 @@ public class VActToon : ModuleRules
 			new string[]
 			{
 				"Core",
+				"CoreUObject",
+				"Engine",
+				"PhysicsCore",
+				"AIModule",
+                "InputCore",
+				"EnhancedInput",
+				"CinematicCamera"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -52,5 +56,5 @@ public class VActToon : ModuleRules
 				// ... add any modules that your module loads dynamically here ...
 			}
 			);
-	}
+    }
 }

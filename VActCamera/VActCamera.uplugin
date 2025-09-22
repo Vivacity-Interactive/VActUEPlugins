@@ -2,12 +2,12 @@
 	"FileVersion": 3,
 	"Version": 1,
 	"VersionName": "1.0",
-	"FriendlyName": "VActToon",
-	"Description": "Toon Shader",
+	"FriendlyName": "VActCamera",
+	"Description": "",
 	"Category": "Other",
 	"CreatedBy": "Vivacity Interactive",
 	"CreatedByURL": "vivacityinteractive.com",
-	"DocsURL": "",
+	"DocsURL": "docs.vact.com/camera-lib",
 	"MarketplaceURL": "",
 	"SupportURL": "",
 	"CanContainContent": true,
@@ -16,9 +16,11 @@
 	"Installed": false,
 	"Modules": [
 		{
-			"Name": "VActToon",
-			"Type": "Developer",
-			"LoadingPhase": "PostConfigInit"
+			"Name": "VActCamera",
+			"Type": "Runtime",
+			"LoadingPhase": "PreLoadingScreen"
 		}
+	],
+	"Plugins": [
 	]
 }
