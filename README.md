@@ -21,6 +21,7 @@ List of Plugins
 - [VActCuDNN](#vactcudnn) _(Unfinished)_
 - [VActML](#vactml) _(boiler)_
 - [VActVR](#vactvr)
+- [VActCamera](#vactcamera)
 
 ## VActBase
 Contains the basic library items Vivacity Interactive uses for most projects as bases, includes
@@ -85,3 +86,6 @@ VR C++ implementation, and Contains default blueprint derivatives
 - ``BP_VRCameraPawn``
 - ``BP_VRPlayerControler``
 - ``BP_VRGameMode``
+
+## VActCamera
+Noir-Like Camera, as if an operator is handling it, allows usage of hints and samplers to match camera behaviours to areas. Hints contain info about camera settings and behaviour plus suggestive location and rotation.
