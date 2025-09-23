@@ -288,9 +288,6 @@ void ACameraPlayerController::Move_Implementation(const FInputActionValue& Value
 	UCharacterMovementComponent* CharacterMovementComponent;
 
 	const bool bRPC = RPC != nullptr && RPC.IsValid() && (MovementComponent = RPC->GetMovementComponent()) != nullptr;
-#if WITH_EDITOR
-	UE_LOG(LogTemp, Warning, TEXT("'%s' Try Move"), *GetNameSafe(this));
-#endif
 	if (bRPC)
 	{
 		FVector Movement = FVector(Value.Get<FVector2D>(), 0);
@@ -306,28 +303,19 @@ void ACameraPlayerController::Move_Implementation(const FInputActionValue& Value
 
 		MovementComponent->AddInputVector(ForwardDirection * Movement.Y);
 		MovementComponent->AddInputVector(RightDirection * Movement.X);
-		
-#if WITH_EDITOR
-		UE_LOG(LogTemp, Warning, TEXT("'%s' Move Success"), *GetNameSafe(this));
-#endif
 	}
 }
 
 void ACameraPlayerController::Look_Implementation(const FInputActionValue& Value)
 {
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
-#if WITH_EDITOR
-	UE_LOG(LogTemp, Warning, TEXT("'%s' Try Look"), *GetNameSafe(this));
-#endif
+
 	const bool bRPC = RPC != nullptr && RPC.IsValid();
 	if (bRPC)
 	{
 		const FRotator DeltaLook = FRotator(LookAxisVector.X, LookAxisVector.Y, 0);
 		CameraTarget.TrackOffset += DeltaLook * LookSensitivityScale;
 	}
-#if WITH_EDITOR
-	UE_LOG(LogTemp, Warning, TEXT("'%s' Look Success"), *GetNameSafe(this));
-#endif
 }
 
 void ACameraPlayerController::Zoom_Implementation(const FInputActionValue& Value)
