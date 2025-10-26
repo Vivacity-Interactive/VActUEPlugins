@@ -8,6 +8,8 @@ public class VActSTT : ModuleRules
 	{
 
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+
+		string WhisperPath = Path.Combine(ModuleDirectory, ".." ,"/ThirdParty/WhisperCpp");
 		
 		PublicIncludePaths.AddRange(
 			new string[] {
@@ -18,6 +20,9 @@ public class VActSTT : ModuleRules
 		
 		PrivateIncludePaths.AddRange(
 			new string[] {
+				Path.Combine(WhisperPath, "include"),
+				Path.Combine(WhisperPath, "src"),
+				Path.Combine(WhisperPath, "ggml")
 				// ... add other private include paths required here ...
 			}
 			);
