@@ -7,7 +7,7 @@
 	"Category": "Other",
 	"CreatedBy": "Vivacity Interactive",
 	"CreatedByURL": "vivacityinteractive.com",
-	"DocsURL": "docs.vact.com/ml-lib",
+	"DocsURL": "docs.vact.com/stt-lib",
 	"MarketplaceURL": "",
 	"SupportURL": "",
 	"CanContainContent": true,
@@ -19,6 +19,12 @@
 			"Name": "VActSTT",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "AudioCapture",
+			"Enabled": true
 		}
 	]
 }
