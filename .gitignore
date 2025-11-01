@@ -93,3 +93,4 @@ ThirdParty/*
 
 # Random
 VisualStudioTools/*
+!VActSTT/Source/ThirdParty/**/*
