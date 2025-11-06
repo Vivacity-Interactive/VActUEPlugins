@@ -6,7 +6,6 @@
 
 USTTComponent::USTTComponent()
 	: bEnabled(false)
-	, TranscriptTokenHandler(TranscriptTokens)
 	, bReady(false)
 	, bRunning(false)
 	, bLazyAudioInit(true)
@@ -160,7 +159,7 @@ void USTTComponent::OnAudioSample(const float* InAudio, int32 NumSamples)
 #if WITH_EDITOR
 		_DEBUG_SampleIn = _InAudio[0];
 #endif
-		const bool bRechannel = SourceNumChannels != Model->Model.ChannelCount;
+		/*const bool bRechannel = SourceNumChannels != Model->Model.ChannelCount;
 		if (bRechannel)
 		{
 			const int32 _NumSamples = NumSamples / SourceNumChannels;
@@ -168,9 +167,9 @@ void USTTComponent::OnAudioSample(const float* InAudio, int32 NumSamples)
 			FVActSTT::_Unsafe_ToMonoCopy(_InAudio, SampleFromChannel, ResampleBuffer.GetData(), SourceNumChannels, NumSamples);
 			NumSamples = _NumSamples;
 			_InAudio = ResampleBuffer.GetData();
-		}
+		}*/
 
-		const bool bResample = SourceSampleRate != Model->Model.SampleRate;
+		/*const bool bResample = SourceSampleRate != Model->Model.SampleRate;
 		if (bResample)
 		{
 			const double Ratio = static_cast<double>(Model->Model.SampleRate)/ static_cast<double>(SourceSampleRate);
@@ -179,9 +178,9 @@ void USTTComponent::OnAudioSample(const float* InAudio, int32 NumSamples)
 			FVActSTT::_Unsafe_Resample(_InAudio, ResampleBuffer.GetData(), Ratio, NumSamples);
 			NumSamples = _NumSamples;
 			_InAudio = ResampleBuffer.GetData();
-		}
+		}*/
 
-		const bool bMultichannel = Model->Model.ChannelCount > 1;
+		/*const bool bMultichannel = Model->Model.ChannelCount > 1;
 		if (bMultichannel)
 		{
 			const int32 _NumSamples = NumSamples * Model->Model.ChannelCount;
@@ -189,7 +188,7 @@ void USTTComponent::OnAudioSample(const float* InAudio, int32 NumSamples)
 			FVActSTT::_Unsafe_ToMultiCopy(_InAudio, ResampleBuffer.GetData(), Model->Model.ChannelCount, NumSamples);
 			NumSamples = _NumSamples;
 			_InAudio = ResampleBuffer.GetData();
-		}
+		}*/
 
 #if WITH_EDITOR
 		_DEBUG_SampleOut = _InAudio[0];
@@ -228,7 +227,7 @@ void USTTComponent::OnProcessSample()
 					const bool bSkip = Token.Text.IsEmpty() || (UseSettings.bSkipSpecial && FVActSTT::IsSpecialToken(Model->Model, Token));
 					if (bSkip) { continue; }
 
-					if (TranscriptTokenHandler.Array) { TranscriptTokenHandler.Add(Token); }
+					TokenBuffer.Push(Token);
 				}
 			}
 			++BatchId;
@@ -240,7 +239,8 @@ void USTTComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	TranscriptTokens.SetNum(TokenCapacity);
+	TokenBuffer.Reset();
+	TokenBuffer.SetCapacity(TokenCapacity);
 
 	bool bSuccess = true;
 	bSuccess &= InitForNewModel();
@@ -290,4 +290,27 @@ bool USTTComponent::IsEnabled()
 bool USTTComponent::IsRunning()
 {
 	return bRunning;
+}
+
+int32 USTTComponent::NumTokens()
+{
+	return TokenBuffer.Num();
+}
+
+bool USTTComponent::PopToken(UPARAM(ref) FSTTToken& Into)
+{
+	const bool bValid = TokenBuffer.Num() > 0;
+	if (bValid) { Into = TokenBuffer.Pop(); }
+	return bValid;
+}
+
+int32 USTTComponent::PopTokens(UPARAM(ref) TArray<FSTTToken>& Into, int32 Count)
+{
+	return TokenBuffer.Pop(Into.GetData(), FMath::Min(Count, Into.Num()));
+}
+
+int32 USTTComponent::PopTokensStart(UPARAM(ref) TArray<FSTTToken>& Into, int32 Count, int32 Start)
+{
+	const bool bValid = Start < Into.Num();
+	return bValid ? TokenBuffer.Pop(&Into[Start], FMath::Min(Count, Into.Num())) : 0;
 }

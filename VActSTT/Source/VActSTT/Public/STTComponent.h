@@ -36,18 +36,13 @@ class VACTSTT_API USTTComponent : public UActorComponent
 
 	Audio::TCircularAudioBuffer<float> AudioBuffer;
 
-	//Audio::FResampler Resampler;
-
-	FBufferHandler<FSTTToken> TranscriptTokenHandler;
+	Audio::TCircularAudioBuffer<FSTTToken> TokenBuffer;
 
 	TFuture<void> ProcessTask;
 
 	int32 BatchId;
 
 public:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VActSTT")
-	TArray<FSTTToken> TranscriptTokens;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VActSTT")
 	uint8 bReady : 1;
 
@@ -109,8 +104,20 @@ public:
 	UFUNCTION(BlueprintCallable, CallInEditor)
 	bool IsEnabled();
 
-	UFUNCTION(BlueprintCallable, CallInEditor)
+	UFUNCTION(BlueprintPure, CallInEditor)
 	bool IsRunning();
+
+	UFUNCTION(BlueprintPure, CallInEditor)
+	int32 NumTokens();
+
+	UFUNCTION(BlueprintCallable, CallInEditor)
+	bool PopToken(UPARAM(ref) FSTTToken& Into);
+
+	UFUNCTION(BlueprintCallable, CallInEditor)
+	int32 PopTokens(UPARAM(ref) TArray<FSTTToken>& Into, int32 Count);
+
+	UFUNCTION(BlueprintCallable, CallInEditor)
+	int32 PopTokensStart(UPARAM(ref) TArray<FSTTToken>& Into, int32 Count, int32 Start);
 
 protected:
 	virtual void BeginPlay() override;
