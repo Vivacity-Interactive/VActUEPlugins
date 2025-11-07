@@ -28,11 +28,9 @@ class VACTSTT_API USTTComponent : public UActorComponent
 
 	FThreadSafeBool bEnabled;
 
-	TArray<float> SamplingBuffer;
+	TArray<float> NewAudioBuffer;
 
-	TArray<float> ResampleBuffer;
-
-	//TArray<float> RechannelBuffer;
+	TArray<int32> TokenPromptBuffer;
 
 	Audio::TCircularAudioBuffer<float> AudioBuffer;
 
@@ -40,38 +38,89 @@ class VACTSTT_API USTTComponent : public UActorComponent
 
 	TFuture<void> ProcessTask;
 
-	int32 BatchId;
+	int32 SamplesStepCount;
+
+	int32 SamplesLengthCount;
+
+	int32 SamplesKeepCount;
+
+	int32 SamplesUnitCount;
+
+	uint32 SamplesNewCount;
+
+	uint32 TokenPromptCount;
+
+	int64 TimeStartNewLine;
+
+	Audio::FAudioCapture AudioCapture;
+
+	Audio::FAudioCaptureDeviceParams AudioCaptureParms;
+
+	double TimeListIteration;
 
 public:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VActSTT")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VActSTT|State")
 	uint8 bReady : 1;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VActSTT")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VActSTT|State")
 	uint8 bRunning : 1;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VActSTT")
-	uint8 bLazyAudioInit : 1;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VActSTT|State")
+	uint8 bNewLine : 1;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VActSTT|Sampling")
-	int32 TokenCapacity;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VActSTT|Sampling")
-	int32 SourceSampleRate;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VActSTT|Sampling")
-	int32 SourceNumChannels;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VActSTT|Sampling")
-	int32 SampleFromChannel;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VActSTT|Sampling")
-	float BufferDurationScale;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VActSTT|Sampling")
-	float ChunkDuration;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VActSTT|State")
+	uint8 bVAD : 1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VActSTT")
+	uint8 bSegmentText : 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VActSTT")
+	uint8 bTokens : 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VActSTT")
+	uint8 bLazyAudioInit : 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VActSTT")
+	uint8 bEchoCancellation : 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VActSTT|VAD")
+	int32 VADWindowDuration;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VActSTT|VAD")
+	int32 VADDuration;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VActSTT|State")
+	int32 NewLineCount;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VActSTT|State")
+	int32 LineCount;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VActSTT|State")
+	int32 IterationCount;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VActSTT|Buffers")
+	int32 TokenCapacity;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VActSTT|Buffers")
+	int32 StepDuration;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VActSTT|Buffers")
+	int32 LengthDuration;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VActSTT|Buffers")
+	int32 KeepDuration;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VActSTT")
 	float ProcessInterval;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VActSTT|VAD")
+	float VADInterval;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VActSTT|VAD")
+	float VADTreshold;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VActSTT|VAD")
+	float VADFrequencyTreshold;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VActSTT")
 	FSTTModelUseSettings UseSettings;
@@ -79,19 +128,21 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced, Category = "VActSTT")
 	TObjectPtr<USTTModelAsset> Model;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VActSTT")
-	TObjectPtr<UAudioCapture> AudioCapture;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VActSTT|State")
+	FString LineText;
 
 public:
 	USTTComponent();
 
 	void TickAudioSTT(float DeltaTime);
 
-	bool InitForNewAudioSource(bool bForceNewSource = false);
+	bool InitForNewSettings();
+
+	bool InitForNewAudioSource(uint32 AudioIndex = INDEX_NONE);
 
 	bool InitForNewModel(USTTModelAsset* InModel = nullptr);
 
-	void OnAudioSample(const float* InAudio, int32 NumSamples);
+	void OnAudioSamples(const void* InAudio, int32 NumFrames, int32 NumChannels, int32 SampleRate, double StreamTime, bool bOverFlow);
 
 	void OnProcessSample();
 
@@ -131,9 +182,6 @@ public:
 
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "_DEBUG", meta = (ClampMin = "-1.0", ClampMax = "1.0", UIMin = "-1.0", UIMax = "1.0"))
-	float _DEBUG_SampleIn;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "_DEBUG", meta = (ClampMin = "-1.0", ClampMax = "1.0", UIMin = "-1.0", UIMax = "1.0"))
-	float _DEBUG_SampleOut;
+	float _DEBUG_SampleActivity;
 #endif
 };

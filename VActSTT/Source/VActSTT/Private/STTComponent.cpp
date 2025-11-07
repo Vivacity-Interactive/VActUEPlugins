@@ -6,22 +6,35 @@
 
 USTTComponent::USTTComponent()
 	: bEnabled(false)
+	, TimeListIteration(0)
 	, bReady(false)
 	, bRunning(false)
+	, bNewLine(false)
+	, bVAD(false)
+	, bSegmentText(false)
+	, bTokens(true)
 	, bLazyAudioInit(true)
-	, TokenCapacity(19)
-	, SourceSampleRate(16000)
-	, SourceNumChannels(1)
-	, SampleFromChannel(0)
-	, BufferDurationScale(2.0f)
-	, ChunkDuration(2.0f)
-	, ProcessInterval(0.03f)
+	, bEchoCancellation(false)
+	, VADWindowDuration(2000)
+	, VADDuration(1000)
+	, NewLineCount(9)
+	, LineCount(0)
+	, IterationCount(0)
+	, TokenCapacity(32)
+	, StepDuration(500)
+	, LengthDuration(5000)
+	, KeepDuration(200)
+	, ProcessInterval(0.01f)
+	, VADInterval(0.1f)
+	, VADTreshold(0.6f)
+	, VADFrequencyTreshold(100.0f)
 	, UseSettings(FSTTModelUseSettings::DefaultUseSettings)
+	, LineText("")
 {
 	PrimaryComponentTick.bCanEverTick = true;
 
 #if WITH_EDITOR
-	_DEBUG_SampleIn = _DEBUG_SampleOut = 0;
+	_DEBUG_SampleActivity = 0;
 #endif
 }
 
@@ -32,9 +45,13 @@ void USTTComponent::StartProcessing()
 	{
 		bEnabled = true;
 		AudioBuffer.SetNum(0, false);
-		if (!AudioCapture->IsCapturingAudio()) { AudioCapture->StartCapturingAudio(); }
+		TimeListIteration = FPlatformTime::Seconds() * 1000u;
+		IterationCount = 0;
+		TokenPromptCount = 0;
+		SamplesNewCount = 0;
+		const bool bStartCapture = !AudioCapture.IsCapturing() && AudioCapture.IsStreamOpen();
+		if (bStartCapture) { AudioCapture.StartStream(); }
 
-		//TWeakObjectPtr<USTTComponent> WeakThis = this;
 		ProcessTask = Async(EAsyncExecution::Thread, [WeakThis = TWeakObjectPtr<USTTComponent>(this)]()
 		{
 #if WITH_EDITOR
@@ -57,53 +74,94 @@ void USTTComponent::StartProcessing()
 void USTTComponent::StopProcessing()
 {
 	bEnabled = false;
-	const bool bStop = AudioCapture != nullptr && AudioCapture->IsCapturingAudio();
-	if (bStop) { AudioCapture->StopCapturingAudio(); }
+	const bool bStop = AudioCapture.IsCapturing();
+	if (bStop) { AudioCapture.StopStream(); }
 }
 
 void USTTComponent::TickAudioSTT(float DeltaTime)
 {
-
+	
 }
 
-bool USTTComponent::InitForNewAudioSource(bool bForceNewSource)
+bool USTTComponent::InitForNewSettings()
 {
 	bool bSuccess = false;
-	bool bNewSource = bForceNewSource || AudioCapture == nullptr;
-	if (bNewSource) { AudioCapture = NewObject<UAudioCapture>(); }
+	const bool bStopCapture =  AudioCapture.IsCapturing();
+	if (bStopCapture) { AudioCapture.StopStream(); }
 
 	if (Model)
 	{
-		const int32 Sampling = Model->Model.SampleRate;
-		const int32 SamplingBufferSize = FMath::CeilToInt(ChunkDuration * Sampling);
-		const int32 AudioBufferSize = FMath::CeilToInt(SamplingBufferSize * BufferDurationScale);
-		SamplingBuffer.SetNumUninitialized(SamplingBufferSize);
-		AudioBuffer.Reset();
-		AudioBuffer.SetCapacity(AudioBufferSize);
-		if (AudioCapture != nullptr)
-		{
-			bSuccess = AudioCapture->OpenDefaultAudioStream();
-			SourceSampleRate = AudioCapture->GetSampleRate();
-			SourceNumChannels = AudioCapture->GetNumChannels();
-			/*Resampler.Init(
-				Audio::EResamplingMethod::Linear,
-				static_cast<float>(Model->Model.SampleRate) / SourceSampleRate,
-				Model->Model.ChannelCount);*/
+		IterationCount = 0;
+		TokenPromptCount = 0;
+		SamplesNewCount = 0;
+		TimeListIteration = FPlatformTime::Seconds();
+		
+		SamplesStepCount = VACT_STT_UNIT_HZ * StepDuration * Model->Model.SampleRate;
+		SamplesLengthCount = VACT_STT_UNIT_HZ * LengthDuration * Model->Model.SampleRate;
+		SamplesKeepCount = VACT_STT_UNIT_HZ * KeepDuration * Model->Model.SampleRate;
+		SamplesUnitCount = VACT_STT_UNIT_HZ * Model->Model.UnitDuration * Model->Model.SampleRate;
+		bVAD = SamplesStepCount <= 0;
 
-			AudioCapture->AddGeneratorDelegate([WeakThis = TWeakObjectPtr<USTTComponent>(this)]
-				(const float* InAudio, int32 NumSamples)
-				{
-					if (WeakThis.IsValid()) { WeakThis->OnAudioSample(InAudio, NumSamples); }
+		NewLineCount = !bVAD ? FMath::Max(1, LengthDuration / StepDuration - 1) : 1;
+
+		UseSettings.bNoTimeStamp = !bVAD;
+		UseSettings.bNoContext |= bVAD;
+		UseSettings.MaxTokens = 0;
+		UseSettings.bSingleSegment = !bVAD;
+
+		TokenBuffer.Reset();
+		TokenBuffer.SetCapacity(TokenCapacity);
+
+		AudioBuffer.Reset();
+		AudioBuffer.SetCapacity(SamplesUnitCount);
+
+		NewAudioBuffer.SetNumZeroed(SamplesUnitCount);
+		bSuccess = true;
+	}
+	return bSuccess;
+}
+
+bool USTTComponent::InitForNewAudioSource(uint32 AudioIndex)
+{
+	bool bSuccess = false;
+
+	if (Model)
+	{
+		const bool bAbortCapture = AudioCapture.IsStreamOpen() || AudioCapture.IsCapturing();
+		if (bAbortCapture) { AudioCapture.AbortStream(); }
+
+		IterationCount = 0;
+		TokenPromptCount = 0;
+		TimeListIteration = FPlatformTime::Seconds();
+
+		AudioCaptureParms = Audio::FAudioCaptureDeviceParams();
+		AudioCaptureParms.PCMAudioEncoding = static_cast<Audio::EPCMAudioEncoding>(FVActSTT::FormatMap[Model->Model.AudioFormat]);
+		AudioCaptureParms.NumInputChannels = Model->Model.ChannelCount;
+		AudioCaptureParms.SampleRate = Model->Model.SampleRate;
+		AudioCaptureParms.bUseHardwareAEC = bEchoCancellation;
+
+		bSuccess = AudioCapture.OpenAudioCaptureStream(
+			AudioCaptureParms,
+			[WeakThis = TWeakObjectPtr<USTTComponent>(this)]
+			(const void* InAudio, int32 NumFrames, int32 NumChannels, int32 SampleRate, double StreamTime, bool bOverFlow)
+			{
+				if (WeakThis.IsValid())
+				{ 
+					WeakThis->OnAudioSamples(InAudio, NumFrames, NumChannels, SampleRate, StreamTime, bOverFlow);
 				}
-			);
-			
-#if WITH_EDITOR
-			UE_LOG(LogTemp, Warning, TEXT("Init Source '%s', S:%d, C:%d, (%d,%d,%d) %s"), *GetNameSafe(this), 
-				SourceSampleRate, SourceNumChannels,
-				SamplingBuffer.Num(), AudioBuffer.Num(), AudioBuffer.GetCapacity(),
-				bSuccess ? TEXT("True") : TEXT("False"));
-#endif
-		}
+			},
+			Model->Model.BatchSampleCount
+		);
+
+//#if WITH_EDITOR
+//		if (bSuccess)
+//		{
+//			UE_LOG(LogTemp, Warning, TEXT("Init Source '%s', S:%d, C:%d, (%d,%d,%d) %s"), *GetNameSafe(this), 
+//				AudioCaptureParms.SampleRate, AudioCaptureParms.NumInputChannel,
+//				NewAudioBuffer.Num(), AudioBuffer.Num(), AudioBuffer.GetCapacity(),
+//				bSuccess ? TEXT("True") : TEXT("False"));
+//		}
+//#endif
 	}
 	return bSuccess;
 }
@@ -120,119 +178,152 @@ bool USTTComponent::InitForNewModel(USTTModelAsset* InModel)
 	const bool bTryLoadModel = Model != nullptr && Model->FilePath.FilePath.IsEmpty() == false;
 	if (bTryLoadModel)
 	{
+		IterationCount = 0;
+		TokenPromptCount = 0;
+		SamplesNewCount = 0;
+		TimeListIteration = FPlatformTime::Seconds();
+
 		FString FullPath = FPaths::ProjectContentDir() / Model->FilePath.FilePath;
 
 		// todo mayb eneeds to be loaded Async
 		FVActSTT::LoadModel(Model->Model, Model->FilePath);
-		BatchId = 0;
 
-		/*const bool bInitResampler = Model->Model.bLoaded && Model->Model.Context != nullptr && AudioCapture != nullptr;
-		if (bInitResampler)
-		{
-			Resampler.Init(
-				Audio::EResamplingMethod::Linear,
-				static_cast<float>(Model->Model.SampleRate) / static_cast<float>(SourceSampleRate),
-				Model->Model.ChannelCount);
-		}*/
 		bSuccess = Model->Model.bLoaded && Model->Model.Context != nullptr;
+
 #if WITH_EDITOR
 		UE_LOG(LogTemp, Warning, TEXT("Init Model '%s', %s"), *GetNameSafe(this), bSuccess ? TEXT("True") : TEXT("False"));
 #endif
 	}
 	return bSuccess;
 }
-
-void USTTComponent::OnAudioSample(const float* InAudio, int32 NumSamples)
+//typedef TFunction<void(const void* InAudio, int32 NumFrames, int32 NumChannels, int32 SampleRate, double StreamTime, bool bOverFlow)> FOnAudioCaptureFunction;
+void USTTComponent::OnAudioSamples(const void* InAudio, int32 NumFrames, int32 NumChannels, int32 SampleRate, double StreamTime, bool bOverFlow)
 {
-	const bool bValid = InAudio != nullptr && NumSamples > 0 
-		&& Model != nullptr && SourceSampleRate > 0 
-		&& Model->Model.SampleRate > 0 
-		&& SampleFromChannel < SourceNumChannels;
+
+	const bool bValid = InAudio != nullptr && NumFrames > 0
+		&& Model != nullptr
+		&& Model->Model.SampleRate > 0;
+
+	const float* _InFloatAudio = static_cast<const float*>(InAudio);
 
 	if (bValid)
 	{
-		// warning resize without shring may cause memory problems
-		// warning cast away const may be dangerous here
-		
-		BatchId = 0;
-		float* _InAudio = const_cast<float*>(InAudio);
 #if WITH_EDITOR
-		_DEBUG_SampleIn = _InAudio[0];
+		_DEBUG_SampleActivity = _InFloatAudio[0];
 #endif
-		/*const bool bRechannel = SourceNumChannels != Model->Model.ChannelCount;
-		if (bRechannel)
-		{
-			const int32 _NumSamples = NumSamples / SourceNumChannels;
-			ResampleBuffer.SetNumUninitialized(_NumSamples, EAllowShrinking::No);
-			FVActSTT::_Unsafe_ToMonoCopy(_InAudio, SampleFromChannel, ResampleBuffer.GetData(), SourceNumChannels, NumSamples);
-			NumSamples = _NumSamples;
-			_InAudio = ResampleBuffer.GetData();
-		}*/
-
-		/*const bool bResample = SourceSampleRate != Model->Model.SampleRate;
-		if (bResample)
-		{
-			const double Ratio = static_cast<double>(Model->Model.SampleRate)/ static_cast<double>(SourceSampleRate);
-			const int32 _NumSamples = FMath::CeilToInt(static_cast<double>(NumSamples) * Ratio);
-			ResampleBuffer.SetNumUninitialized(_NumSamples, EAllowShrinking::No);
-			FVActSTT::_Unsafe_Resample(_InAudio, ResampleBuffer.GetData(), Ratio, NumSamples);
-			NumSamples = _NumSamples;
-			_InAudio = ResampleBuffer.GetData();
-		}*/
-
-		/*const bool bMultichannel = Model->Model.ChannelCount > 1;
-		if (bMultichannel)
-		{
-			const int32 _NumSamples = NumSamples * Model->Model.ChannelCount;
-			ResampleBuffer.SetNumUninitialized(_NumSamples, EAllowShrinking::No);
-			FVActSTT::_Unsafe_ToMultiCopy(_InAudio, ResampleBuffer.GetData(), Model->Model.ChannelCount, NumSamples);
-			NumSamples = _NumSamples;
-			_InAudio = ResampleBuffer.GetData();
-		}*/
-
-#if WITH_EDITOR
-		_DEBUG_SampleOut = _InAudio[0];
-#endif
-		AudioBuffer.Push(_InAudio, NumSamples);
+		AudioBuffer.Push(_InFloatAudio, NumFrames);
 	}
 #if WITH_EDITOR
-	else { UE_LOG(LogTemp, Log, TEXT("   -Sampling '%s' Failed, %d:%d"), *GetNameSafe(this), SourceSampleRate, Model ? Model->Model.SampleRate : -1); }	
+	else { UE_LOG(LogTemp, Log, TEXT("   -Sampling '%s' Failed, %d:%d"), *GetNameSafe(this), SampleRate, Model ? Model->Model.SampleRate : -1); }
 #endif
 }
 
 void USTTComponent::OnProcessSample()
 {
-	const bool bProcess = Model != nullptr && AudioBuffer.Num() >= static_cast<uint32>(SamplingBuffer.Num());
+	/*if (bVAD)
+	{
+		double TimeNow = FPlatformTime::Seconds();
+		double Duration = TimeNow - TimeListIteration;
+
+		const bool bVADWait = Duration < VADWindowDuration;
+		if (bVADWait) { FPlatformProcess::Sleep(VADInterval); return; }
+	}*/
+
+	const bool bProcess = Model != nullptr && AudioBuffer.Num() >= static_cast<uint32>(SamplesStepCount);
+
+	// maybe drop if 
 	if (bProcess)
 	{
-		AudioBuffer.Pop(SamplingBuffer.GetData(), SamplingBuffer.Num());
+
+		const uint32 PopSamplesCount = FMath::Min(AudioBuffer.Num(), static_cast<uint32>(NewAudioBuffer.Num()));
+		const uint32 PopOverflowCount = AudioBuffer.Num() - PopSamplesCount;
+		const uint32 SamplesTakeCount = static_cast<uint32>(NewAudioBuffer.Num()) - PopSamplesCount;
+		AudioBuffer.Pop(PopOverflowCount);
+
+		/*if (bVAD)
+		{
+			// pop VADDuration check and if valid continue
+			const bool bVADWait = FVActSTT::_Unsafe_VAD(NewAudioBuffer.GetData(), NewAudioBuffer.GetData(), VADDuration,
+				Model->Model.SampleRate, 0, VADTreshold, VADFrequencyTreshold);
+
+			if (bVADWait) { FPlatformProcess::Sleep(VADInterval); return; }
+		}*/
+		
+		FMemory::Memmove(NewAudioBuffer.GetData(), NewAudioBuffer.GetData() + PopSamplesCount, SamplesTakeCount * sizeof(float));
+		const int32 SamplesPopedCount = AudioBuffer.Pop(NewAudioBuffer.GetData() + SamplesTakeCount, PopSamplesCount);
+		SamplesNewCount = SamplesTakeCount + PopSamplesCount;
+		
+		// maybe drop if remaining
 
 		int32 SegmentsCount = 0;
 		bool bSuccess = false;
-		FVActSTT::UseModel(bSuccess, SegmentsCount, Model->Model, SamplingBuffer, UseSettings);
+		FVActSTT::_Unsafe_UseModel(bSuccess, SegmentsCount, Model->Model, 
+			NewAudioBuffer.GetData(), SamplesNewCount, 
+			UseSettings, 
+			TokenPromptBuffer.GetData(), TokenPromptCount);
+		
+		const bool bTokenPrompt = !UseSettings.bNoContext;
 
 		if (bSuccess)
 		{
+			TokenPromptCount = 0;
+
+			const int64 RealTimeOffset = (FPlatformTime::Seconds() - (SamplesTakeCount / Model->Model.SampleRate)) * 1000ll;
+
+			++IterationCount;
+			bNewLine = (IterationCount % NewLineCount) == 0;
+			if (bNewLine)
+			{
+				++LineCount;
+				LineText = "";
+				TimeStartNewLine = FPlatformTime::Seconds() * 1000ll;
+			}
+			
+			
+			if (UseSettings.bNoContext) { TokenPromptBuffer.SetNumUninitialized(SegmentsCount * UseSettings.MaxTokens, EAllowShrinking::No); }
 			for (int32 SegmentId = 0; SegmentId < SegmentsCount; ++SegmentId)
 			{
 				int32 TokenCount = 0;
 				FSTTToken Token;
-				Token.BatchId = BatchId;
 				FVActSTT::PopulateToken(Token, TokenCount, Model->Model, SegmentId);
 
-				for (int32 TokenIndex = 0; TokenIndex < TokenCount; ++TokenIndex)
-				{
-					FVActSTT::PopulateToken(Token, Model->Model, SegmentId, TokenIndex);
-					
-					const bool bSkip = Token.Text.IsEmpty() || (UseSettings.bSkipSpecial && FVActSTT::IsSpecialToken(Model->Model, Token));
-					if (bSkip) { continue; }
+				//uint32 FrameStart = SegmentId * (Model->Model.UnitDuration)
+				//FVActSTT::SegmentFrameStart(FrameStart, Model->Model, SegmentId);
 
-					TokenBuffer.Push(Token);
+				int64 T0, T1;
+				FVActSTT::SegmentTime(T0, T1, Model->Model, SegmentId);
+				const int64 _T1 = RealTimeOffset + T1 * Model->Model.UnitTimeScale;
+#if WITH_EDITOR
+				UE_LOG(LogTemp, Warning, TEXT("Init Model '%lld', %lld"), T0, T1);
+#endif
+
+				const bool bAppendSegment = _T1 >= TimeStartNewLine;// FrameStart >= SamplesTakeCount;
+				if (bAppendSegment) 
+				{
+					FVActSTT::SegmentText(LineText, Model->Model, SegmentId);
+				}
+
+				const bool bIterateTokens = bTokens || bTokenPrompt;
+				if (bIterateTokens)
+				{
+					for (int32 TokenIndex = 0; TokenIndex < TokenCount; ++TokenIndex)
+					{
+						FVActSTT::PopulateToken(Token, Model->Model, SegmentId, TokenIndex);
+
+						if (bTokenPrompt) { TokenPromptBuffer[TokenPromptCount] = Token.Id; ++TokenPromptCount; }
+
+						const bool bSkip = !bTokens || Token.Text.IsEmpty() || (!UseSettings.bSpecialTokens && FVActSTT::IsSpecialToken(Model->Model, Token));
+						if (bSkip) { continue; }
+
+						TokenBuffer.Push(Token);
+					}
 				}
 			}
-			++BatchId;
+			
 		}
+		else { LineText = ""; }
 	}
+	else { LineText = ""; }
 }
 
 void USTTComponent::BeginPlay()
@@ -244,6 +335,7 @@ void USTTComponent::BeginPlay()
 
 	bool bSuccess = true;
 	bSuccess &= InitForNewModel();
+	bSuccess &= InitForNewSettings();
 	bSuccess &= InitForNewAudioSource();
 
 	bReady = bSuccess;
