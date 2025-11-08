@@ -99,7 +99,7 @@ bool USTTComponent::InitForNewSettings()
 		SamplesStepCount = VACT_STT_UNIT_HZ * StepDuration * Model->Model.SampleRate;
 		SamplesLengthCount = VACT_STT_UNIT_HZ * LengthDuration * Model->Model.SampleRate;
 		SamplesKeepCount = VACT_STT_UNIT_HZ * KeepDuration * Model->Model.SampleRate;
-		SamplesUnitCount = VACT_STT_UNIT_HZ * Model->Model.UnitDuration * Model->Model.SampleRate;
+		SamplesUnitCount = SamplesKeepCount + FMath::Max(SamplesLengthCount, SamplesStepCount); //VACT_STT_UNIT_HZ * Model->Model.UnitDuration * Model->Model.SampleRate;
 		bVAD = SamplesStepCount <= 0;
 
 		NewLineCount = !bVAD ? FMath::Max(1, LengthDuration / StepDuration - 1) : 1;
@@ -234,11 +234,18 @@ void USTTComponent::OnProcessSample()
 	// maybe drop if 
 	if (bProcess)
 	{
-
 		const uint32 PopSamplesCount = FMath::Min(AudioBuffer.Num(), static_cast<uint32>(NewAudioBuffer.Num()));
 		const uint32 PopOverflowCount = AudioBuffer.Num() - PopSamplesCount;
 		const uint32 SamplesTakeCount = static_cast<uint32>(NewAudioBuffer.Num()) - PopSamplesCount;
 		AudioBuffer.Pop(PopOverflowCount);
+
+		
+
+		/*const uint32 PossiblePopCount = FMath::Min(static_cast<uint32>(NewAudioBuffer.Num()), static_cast<uint32>(SamplesStepCount));
+		const uint32 PopSamplesCount = FMath::Min(AudioBuffer.Num(), PossiblePopCount);
+		const uint32 PopOverflowCount = AudioBuffer.Num() - PopSamplesCount;
+		const uint32 SamplesTakeCount = FMath::Min(static_cast<uint32>(NewAudioBuffer.Num()) - PopSamplesCount, static_cast<uint32>(SamplesKeepCount));
+		AudioBuffer.Pop(PopOverflowCount);*/
 
 		/*if (bVAD)
 		{
@@ -248,7 +255,7 @@ void USTTComponent::OnProcessSample()
 
 			if (bVADWait) { FPlatformProcess::Sleep(VADInterval); return; }
 		}*/
-		
+
 		FMemory::Memmove(NewAudioBuffer.GetData(), NewAudioBuffer.GetData() + PopSamplesCount, SamplesTakeCount * sizeof(float));
 		const int32 SamplesPopedCount = AudioBuffer.Pop(NewAudioBuffer.GetData() + SamplesTakeCount, PopSamplesCount);
 		SamplesNewCount = SamplesTakeCount + PopSamplesCount;
