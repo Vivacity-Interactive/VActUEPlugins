@@ -1,11 +1,12 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "GenericPlatform/GenericPlatformMisc.h"
 
 #include "CoreMinimal.h"
 #include "Containers/ContainerAllocationPolicies.h"
+
+//template<typename ElementType, template<typename> class HandlerType>
+//struct FIteratorHandler;
 
 template<class InOwnerClass>
 class VACTBASE_API TIterateHandler
@@ -76,3 +77,52 @@ public:
 		return _Owner != nullptr;
 	}
 };
+
+
+//template<typename ElementType, template<typename> class HandlerType>
+//struct VACTBASE_API FIteratorHandler
+//{
+//	int32 Index;
+//
+//	HandlerType<ElementType>& Handler;
+//
+//	FIteratorHandler(HandlerType<ElementType>& InHandler)
+//		: Index(0)
+//		, Handler(InHandler)
+//	{
+//	}
+//
+//	operator bool() const { return Index < Handler.Num(); }
+//
+//	bool operator !=(const FIteratorHandler& Other) const
+//	{
+//		return Index != Other.Index;
+//	}
+//
+//	FIteratorHandler& operator++()
+//	{
+//		++Index;
+//		return *this;
+//	}
+//
+//	FIteratorHandler& operator--()
+//	{
+//		--Index;
+//		return *this;
+//	}
+//
+//	ElementType& operator*()
+//	{
+//		int32 _Index = Handler.BufferIndex(Index);
+//		return (*Handler.Array)[_Index];
+//	}
+//
+//	ElementType* operator->()
+//	{
+//		int32 _Index = Handler.BufferIndex(Index);
+//		return &(*Handler.Array)[_Index];
+//	}
+//};
+//
+//template<typename ElementType, template<typename> class HandlerType>
+//FIteratorHandler(HandlerType<ElementType>&) -> FIteratorHandler<ElementType, HandlerType>;

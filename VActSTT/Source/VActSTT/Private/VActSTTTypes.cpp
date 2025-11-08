@@ -44,12 +44,11 @@ FSTTModel::FSTTModel()
 }
 
 FSTTToken::FSTTToken()
-	: TimeStamp(-1)
+	: CustomId(-1)
 	, ContextId(-1)
 	, SegmentId(-1)
 	, Id(-1)
 	, Index(-1)
-	, Duration(0.0f)
 	, Probability(0.0f)
 	, Text(TEXT(""))
 {

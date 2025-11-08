@@ -87,6 +87,12 @@ struct FVActSTT
 		_Unsafe_PopulateToken(Into, TokenCount, Model, SegmentId);
 	}
 
+	FORCEINLINE static void TokenTime(int64& T0, int64& T1, const FSTTModel& Model, int32 SegmentId, int32 TokenIndex)
+	{
+		if (Model.Context == nullptr) { T0 = T1 = 0u; return; }
+		_Unsafe_TokenTime(T0, T1, Model, SegmentId, TokenIndex);
+	}
+
 	FORCEINLINE static void SegmentTime(int64& T0, int64& T1, const FSTTModel& Model, int32 SegmentId)
 	{
 		if (Model.Context == nullptr) { T0 = T1 = 0; return; }
@@ -116,19 +122,6 @@ struct FVActSTT
 	{
 		if (Model.Context == nullptr) { Into = ""; return; }
 		_Unsafe_SegmentTextAppend(Into, Model, SegmentId);
-		Into = Into.Mid(SegmentTextOffset);
-	}
-
-	FORCEINLINE static void LineText(FString& Into, const FSTTModel& Model, int32 SegmentId)
-	{
-		if (Model.Context == nullptr) { Into = ""; return; }
-		_Unsafe_SegmentText(Into, Model, SegmentId);
-	}
-
-	FORCEINLINE static void LineText(FString& Into, const FSTTModel& Model, int32 SegmentId, int32 SegmentTextOffset)
-	{
-		if (Model.Context == nullptr) { Into = ""; return; }
-		_Unsafe_SegmentText(Into, Model, SegmentId);
 		Into = Into.Mid(SegmentTextOffset);
 	}
 
@@ -226,6 +219,8 @@ struct FVActSTT
 	static void _Unsafe_IsSpecialToken(bool& Into, const FSTTModel& Model, int32 TokenId);
 
 	static void _Unsafe_TokenId(int32& Into, const FSTTModel& Model, int32 SegmentId, int32 TokenIndex);
+
+	static void _Unsafe_TokenTime(int64& T0, int64& T1, const FSTTModel& Model, int32 SegmentId, int32 TokenIndex);
 
 	static void _Unsafe_HighPassFilter(const float* InAudio, float* OutAudio, int32 NumSamples, float Treshold, int32 SampleRate);
 

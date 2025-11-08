@@ -89,8 +89,6 @@ void FVActSTT::_Unsafe_PopulateToken(FSTTToken& Into, int32& TokenCount, const F
 	whisper_context* Context = reinterpret_cast<whisper_context*>(Model.Context);
 
 	Into.SegmentId = SegmentId;
-	//Into.TimeStamp = whisper_full_get_segment_t0(Context, SegmentId);
-	//Into.Duration = whisper_full_get_segment_t1(Context, SegmentId) - Into.TimeStamp;
 
 	TokenCount = whisper_full_n_tokens(Context, SegmentId);
 }
@@ -143,6 +141,14 @@ void FVActSTT::_Unsafe_TokenId(int32& Into, const FSTTModel& Model, int32 Segmen
 	
 	Into = whisper_full_get_token_id(Context, SegmentId, TokenIndex);
 }
+
+void FVActSTT::_Unsafe_TokenTime(int64& T0, int64& T1, const FSTTModel& Model, int32 SegmentId, int32 TokenIndex)
+{
+	whisper_context* Context = reinterpret_cast<whisper_context*>(Model.Context);
+	T0 = T1 = static_cast<int64>(FPlatformTime::Seconds() * 1000);
+}
+
+
 
 void FVActSTT::_Unsafe_HighPassFilter(const float* InAudio, float* OutAudio, int32 NumSamples, float Treshold, int32 SampleRate)
 {

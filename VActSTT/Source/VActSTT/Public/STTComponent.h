@@ -28,6 +28,8 @@ class VACTSTT_API USTTComponent : public UActorComponent
 
 	FThreadSafeBool bEnabled;
 
+	FSTTModelUseSettings ActiveUseSettings;
+
 	TArray<float> NewAudioBuffer;
 
 	TArray<int32> TokenPromptBuffer;
@@ -45,6 +47,8 @@ class VACTSTT_API USTTComponent : public UActorComponent
 	int32 SamplesKeepCount;
 
 	int32 SamplesUnitCount;
+
+	int32 VADSamplesCount;
 
 	uint32 SamplesNewCount;
 
@@ -71,6 +75,12 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VActSTT|State")
 	uint8 bVAD : 1;
 
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VActSTT|VAD")
+	uint8 bForceVAD : 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VActSTT|State")
+	uint8 bCustomLineCount : 1;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VActSTT")
 	uint8 bSegmentText : 1;
 
@@ -89,7 +99,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VActSTT|VAD")
 	int32 VADDuration;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VActSTT|State")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VActSTT", meta = (EditCondition = "bCustomLineCount"))
 	int32 NewLineCount;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VActSTT|State")
@@ -129,17 +139,26 @@ public:
 	TObjectPtr<USTTModelAsset> Model;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VActSTT|State")
-	FString LineText;
+	FString SegmentText;
+#if WITH_EDITORONLY_DATA
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VActSTT|Device", meta = (GetOptions = "GetAvailableDeviceNames"))
+	FString SelectDevice;
+#endif
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VActSTT|Device")
+	FSTTCaptureDevice CaptureDevice;
 
 public:
 	USTTComponent();
 
 	void TickAudioSTT(float DeltaTime);
 
+	UFUNCTION(BlueprintCallable)
 	bool InitForNewSettings();
 
-	bool InitForNewAudioSource(uint32 AudioIndex = INDEX_NONE);
+	UFUNCTION(BlueprintCallable)
+	bool InitForNewAudioSource();
 
+	UFUNCTION(BlueprintCallable)
 	bool InitForNewModel(USTTModelAsset* InModel = nullptr);
 
 	void OnAudioSamples(const void* InAudio, int32 NumFrames, int32 NumChannels, int32 SampleRate, double StreamTime, bool bOverFlow);
@@ -152,23 +171,30 @@ public:
 	UFUNCTION(BlueprintCallable, CallInEditor)
 	void StopProcessing();
 
-	UFUNCTION(BlueprintCallable, CallInEditor)
+	UFUNCTION(BlueprintCallable)
 	bool IsEnabled();
 
-	UFUNCTION(BlueprintPure, CallInEditor)
+	UFUNCTION(BlueprintPure)
 	bool IsRunning();
 
-	UFUNCTION(BlueprintPure, CallInEditor)
+	UFUNCTION(BlueprintPure)
 	int32 NumTokens();
 
-	UFUNCTION(BlueprintCallable, CallInEditor)
+	UFUNCTION(BlueprintCallable)
 	bool PopToken(UPARAM(ref) FSTTToken& Into);
 
-	UFUNCTION(BlueprintCallable, CallInEditor)
+	UFUNCTION(BlueprintCallable)
 	int32 PopTokens(UPARAM(ref) TArray<FSTTToken>& Into, int32 Count);
 
-	UFUNCTION(BlueprintCallable, CallInEditor)
+	UFUNCTION(BlueprintCallable)
 	int32 PopTokensStart(UPARAM(ref) TArray<FSTTToken>& Into, int32 Count, int32 Start);
+
+public:
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	bool OnTokenPredicate(FSTTToken& InToken, int64 RealTimeOffset, int32 PopSamplesCount, int32 SamplesTakeCount);
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+	bool OnSegmentPredicate(int32 SegmentId, int64 RealTimeOffset, int32 PopSamplesCount, int32 SamplesTakeCount);
 
 protected:
 	virtual void BeginPlay() override;
@@ -183,5 +209,25 @@ public:
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "_DEBUG", meta = (ClampMin = "-1.0", ClampMax = "1.0", UIMin = "-1.0", UIMax = "1.0"))
 	float _DEBUG_SampleActivity;
+
+
+#endif
+
+#if WITH_EDITOR
+public:
+	UFUNCTION(CallInEditor)
+	void InitNewSettings();
+
+	UFUNCTION(CallInEditor)
+	void InitNewAudioSource();
+
+	UFUNCTION(CallInEditor)
+	void InitNewModel();
+
+	UFUNCTION()
+	TArray<FString> GetAvailableDeviceNames();
+
+protected:
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 };
