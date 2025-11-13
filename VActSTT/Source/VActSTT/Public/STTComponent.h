@@ -1,9 +1,6 @@
 #pragma once
 
-#include "AudioCaptureComponent.h"
 #include "AudioCapture.h"
-#include "Sound/SoundSubmix.h"
-#include "Sound/SoundWaveProcedural.h"
 #include "DSP/Dsp.h"
 #include "STTModelAsset.h"
 #include "AudioCaptureCore.h"
@@ -15,10 +12,6 @@
 #include "STTComponent.generated.h"
 
 class UAudioCaptureComponent;
-class USoundSubmix;
-class UAudioCapture;
-class USoundWaveProcedural;
-class USoundCue;
 class USTTModelAsset;
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
