@@ -125,6 +125,12 @@ struct VACTAPI_API FAPICertificate
     GENERATED_BODY()
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int64 DurationFrom;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int64 DurationTo;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString Certificate;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -272,4 +278,19 @@ struct VACTAPI_API FAPIUser
     FAPIUser(FAPIToken InToken);
 
     FAPIUser(FAPIToken InToken, FAPISecret InSecret);
+};
+
+struct VACTAPI_API FAPIConstFormEntry
+{
+    FString ContentType;
+
+    FString ContentDisposition;
+
+    FString FieldName;
+
+    //TMap<FString, FString> DispositionFields;
+
+    //TMap<FString, TArray<FString>> Headers;
+
+    TArrayView<const uint8> Body;
 };

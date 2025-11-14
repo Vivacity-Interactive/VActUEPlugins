@@ -24,26 +24,42 @@ bool UAPIServerImageUpload::OnDataIn(
 	FGuid& UserId
 )
 {
-	bool bSuccess = Request.Body.Num() <= 0;
+	TMap<FString, FAPIConstFormEntry> Form;
+	bool bSuccess = Request.Body.Num() > 0 && FVActAPI::Multipart(Request, Form);
 	UTexture2D* Image = nullptr;
+
+#if WITH_EDITOR
+	UE_LOG(LogTemp, Warning, TEXT("%s try starting image request"), *GetNameSafe(this));
+#endif
 
 	if (bSuccess)
 	{
 		FImage _Image;
 		IImageWrapperModule& ImageWrapperModule = FModuleManager::LoadModuleChecked<IImageWrapperModule>("ImageWrapper");
 		EImageFormat Format = ImageWrapperModule.DetectImageFormat(Request.Body.GetData(), Request.Body.Num());
-
+#if WITH_EDITOR
+		UE_LOG(LogTemp, Warning, TEXT("%s starting image request"), *GetNameSafe(this));
+#endif
 		const bool bValid = Format != EImageFormat::Invalid;
 		if (!bValid) { return false; }
-		
+
+#if WITH_EDITOR
+		UE_LOG(LogTemp, Warning, TEXT("%s format image valid"), *GetNameSafe(this));
+#endif
 		const bool bDecompressed = ImageWrapperModule.DecompressImage(Request.Body.GetData(), Request.Body.Num(), _Image);
 		if (!bDecompressed) { return false; }
 
+#if WITH_EDITOR
+		UE_LOG(LogTemp, Warning, TEXT("%s image decompressed"), *GetNameSafe(this));
+#endif
 		EPixelFormat _PixelFormat = bForceImageRawFormat
 			? FVActAPI::ImageRawFormatMapE[RawImageFormat]
 			: FVActAPI::_ImageRawFormatMapE[_Image.Format];
 
 		Image = UTexture2D::CreateTransient(_Image.SizeX, _Image.SizeY, _PixelFormat);
+#if WITH_EDITOR
+		UE_LOG(LogTemp, Warning, TEXT("%s image texture created"), *GetNameSafe(this));
+#endif
 	}
 
 	bSuccess &= Image != nullptr && OnImageIn(Image);
@@ -77,6 +93,10 @@ bool UAPIServerImageUpload::OnDataOut(
 			FTexturePlatformData* PlatformData = Image->GetPlatformData();
 			
 			FImage _Image;
+
+#if WITH_EDITOR
+			UE_LOG(LogTemp, Warning, TEXT("%s starting image response"), *GetNameSafe(this));
+#endif
 
 			const bool bGPUImage = ResourceData != nullptr;
 			const bool bCPUImage = PlatformData != nullptr;

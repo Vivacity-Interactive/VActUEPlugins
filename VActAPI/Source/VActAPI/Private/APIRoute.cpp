@@ -1,8 +1,7 @@
 #include "APIRoute.h"
 
 UAPIRoute::UAPIRoute()
-	: bHttps(false)
-	, Name(NAME_None)
+	: Name(NAME_None)
 	, Port(8080)
 	, PortMaxOffset(10)
 	, Route(TEXT(""))

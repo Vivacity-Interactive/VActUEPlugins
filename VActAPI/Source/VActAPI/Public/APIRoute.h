@@ -17,9 +17,6 @@ class VACTAPI_API UAPIRoute : public UObject
 
 public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    uint8 bHttps : 1;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FName Name;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)

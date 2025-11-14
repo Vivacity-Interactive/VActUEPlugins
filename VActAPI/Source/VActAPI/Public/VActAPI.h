@@ -65,6 +65,35 @@ struct VACTAPI_API FVActAPI
 		return bValid && _Unsafe_Entry(InAPIInstance, InRoute, InEntry, OutName, Handle);
 	}
 
+	FORCEINLINE static bool Certificate(UAPIInstance* InAPIInstance)
+	{
+		const bool bValid = InAPIInstance != nullptr;
+		return bValid && _Unsafe_Certificate(InAPIInstance);
+	}
+
+	FORCEINLINE static bool Multipart(const FHttpServerRequest& Request, TMap<FString, FAPIConstFormEntry>& Map)
+	{
+		const TArray<FString>* ContentType = Request.Headers.Find("Content-Type");
+		const bool bValid = ContentType != nullptr;
+		return bValid && _Unsafe_Multipart(Request, Map);
+	}
+
 	static bool _Unsafe_Entry(UAPIInstance* InAPIInstance, UAPIRoute* InRoute, FAPIEntry& InEntry, FName& OutName, FHttpRouteHandle& Handle);
+
+	static bool _Unsafe_Certificate(UAPIInstance* InAPIInstance);
+
+	static bool _Unsafe_Multipart(const FHttpServerRequest& Request, TMap<FString, FAPIConstFormEntry>& Map);
+
+	static bool _Unsafe_Multipart(const TArrayView<const uint8>& Segment, FAPIConstFormEntry& Entry);
+
+	static bool _Unsafe_Multipart(const FHttpServerRequest& Request, FAPIConstFormEntry& Entry);
+
+	static bool _Unsafe_Multipart(const FHttpServerRequest& Request, const FString& Target, TArray<FAPIConstFormEntry>& Entries);
+
+	static bool _Unsafe_Token(const uint8* Buffer, int32 NumBuffer, const uint8* Token, const int32 NumToken, int32& Pivot, bool bConsume = true);
+
+	static bool _Unsafe_TokenNot(const uint8* Buffer, int32 NumBuffer, const uint8* Token, const int32 NumToken, int32& Pivot, bool bConsume = true);
+
+	static bool _Unsafe_TokenRangeNot(const uint8* Buffer, int32 NumBuffer, uint8 From, uint8 To, int32& Pivot, bool bConsume = true);
 
 };

@@ -3,7 +3,32 @@
 #include "APICallback.h"
 #include "APIInstance.h"
 
+THIRD_PARTY_INCLUDES_START
+#ifdef _WIN32
+#define UI UI_ST
+#endif
+
+#include <openssl/x509.h>
+#include <openssl/pem.h>
+#include <openssl/rsa.h>
+#include <openssl/bn.h>
+#include <openssl/rand.h>
+#include <openssl/x509v3.h>
+
+#ifdef _WIN32
+#undef UI
+#endif
+THIRD_PARTY_INCLUDES_END
+
 #include "Misc/Base64.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
+
+#define _VACTAPI_MPFD_CTX_E(InType) static const TArray<uint8> InType({ '-', '-' })
+#define _VACTAPI_MPFD_HDR_E(InType) static const TArray<uint8> InType({ '\r', '\n' })
+#define _VACTAPI_MPFD_CTX_D(InType) static const TArray<uint8> InType({ 'C' ,'o' ,'n' ,'t' ,'e' ,'n' ,'t' ,'-' ,'D' ,'i' ,'s' ,'p' ,'o' ,'s' ,'i' ,'t' ,'i' ,'o' ,'n'  })
+#define _VACTAPI_MPFD_CTX_T(InType) static const TArray<uint8> InType({ 'C' ,'o' ,'n' ,'t' ,'e' ,'n' ,'t' ,'-' ,'T' ,'y' ,'p' ,'e'  })
+//#define _VACTAPI_MPFD_CTX_N(InType) static const TArray<uint8> InType({ 'C' ,'o' ,'n' ,'t' ,'e' ,'n' ,'t' ,'-' ,'L' ,'e' ,'n' ,'g' ,'t' ,'h'  })
 
 const FString FVActAPI::AuthorizationKey = TEXT("Authorization");
 
@@ -191,11 +216,19 @@ const TMap<EAPIImageFormat, EAPIEntryContent> FVActAPI::EntryImageContentMapE = 
 
 bool FVActAPI::_Unsafe_Entry(UAPIInstance* InAPIInstance, UAPIRoute* InRoute, FAPIEntry& InEntry, FName& OutName, FHttpRouteHandle& Handle)
 {
+	TWeakObjectPtr<UAPIInstance> WeakInstance = InAPIInstance;
 	Handle = InRoute->HttpRouter->BindRoute(FHttpPath(InEntry.GetEntryUrl(InAPIInstance->Identity)), EntryModeMapE[InEntry.Mode], FHttpRequestHandler::CreateLambda(
-		[&InEntry, InRoute, InAPIInstance](const FHttpServerRequest& Request, const FHttpResultCallback& OnComplete)
+		[&InEntry, InRoute, WeakInstance](const FHttpServerRequest& Request, const FHttpResultCallback& OnComplete)
 		{
+			if (!WeakInstance.IsValid())
+			{
+#if WITH_EDITOR
+				UE_LOG(LogTemp, Warning, TEXT("invalid API Instance object, probably destroyed"));
+#endif
+				return false;
+			}
 
-			const FAPIIdentity& Identity = InAPIInstance->Identity;
+			const FAPIIdentity& Identity = WeakInstance->Identity;
 			TUniquePtr<FHttpServerResponse> Response;
 			FGuid UserId;
 
@@ -205,7 +238,7 @@ bool FVActAPI::_Unsafe_Entry(UAPIInstance* InAPIInstance, UAPIRoute* InRoute, FA
 					? Request.PathParams[FVActAPI::SessionPathTokenKey]
 					: TEXT("");
 
-				const bool bBounce = !InAPIInstance->Bouncer(SessionPathToken);
+				const bool bBounce = !WeakInstance->Bouncer(SessionPathToken);
 				if (bBounce)
 				{
 					Response = FHttpServerResponse::Create(TEXT(""), EntryContentMap[EAPIEntryContent::Text]);
@@ -220,7 +253,7 @@ bool FVActAPI::_Unsafe_Entry(UAPIInstance* InAPIInstance, UAPIRoute* InRoute, FA
 				const TArray<FString>* AuthHeader = Request.Headers.Find(FVActAPI::AuthorizationKey);
 				FString SessionToken = AuthHeader ? (*AuthHeader)[0].RightChop(7) : TEXT("");
 
-				const bool bReject = !InAPIInstance->Guard(SessionToken, UserId);
+				const bool bReject = !WeakInstance->Guard(SessionToken, UserId);
 				if (bReject)
 				{
 					Response = FHttpServerResponse::Create(TEXT(""), EntryContentMap[EAPIEntryContent::Text]);
@@ -238,7 +271,7 @@ bool FVActAPI::_Unsafe_Entry(UAPIInstance* InAPIInstance, UAPIRoute* InRoute, FA
 #if WITH_EDITOR
 				UE_LOG(LogTemp, Warning, TEXT("request with Code '%s', %d url params"), *RequestCode, Request.PathParams.Num());
 #endif
-				const bool bDecline = !InAPIInstance->Reception(RequestCode);
+				const bool bDecline = !WeakInstance->Reception(RequestCode);
 				if (bDecline)
 				{
 					Response = FHttpServerResponse::Create(TEXT(""), EntryContentMap[EAPIEntryContent::Text]);
@@ -259,7 +292,7 @@ bool FVActAPI::_Unsafe_Entry(UAPIInstance* InAPIInstance, UAPIRoute* InRoute, FA
 				const bool bDenied = !UserNamePasswordEncoded.IsEmpty()
 					|| !FBase64::Decode(UserNamePasswordEncoded, UserNamePassword, EBase64Mode::Standard)
 					|| !UserNamePassword.Split(TEXT(":"), &UserName, &HashedPassword)
-					|| !InAPIInstance->Authenticate(UserName, HashedPassword, SessionToken, UserId);
+					|| !WeakInstance->Authenticate(UserName, HashedPassword, SessionToken, UserId);
 
 				if (bDenied)
 				{
@@ -272,8 +305,10 @@ bool FVActAPI::_Unsafe_Entry(UAPIInstance* InAPIInstance, UAPIRoute* InRoute, FA
 
 			if (InEntry.bReceive && InEntry.Callback)
 			{
-				const bool bFailed = !InEntry.Callback->OnDataIn(Request, InEntry, InRoute, InAPIInstance, UserId);
-
+				const bool bFailed = !InEntry.Callback->OnDataIn(Request, InEntry, InRoute, WeakInstance.Get(), UserId);
+#if WITH_EDITOR
+				UE_LOG(LogTemp, Warning, TEXT("request handling receive  %s '%s'"), bFailed ? TEXT("Failed") : TEXT("Success"), *InEntry.GetEntryUrl(Identity));
+#endif
 				if (bFailed)
 				{
 					Response = FHttpServerResponse::Create(TEXT(""), EntryContentMap[EAPIEntryContent::Text]);
@@ -288,9 +323,11 @@ bool FVActAPI::_Unsafe_Entry(UAPIInstance* InAPIInstance, UAPIRoute* InRoute, FA
 				TArray<uint8> Data;
 				Response = FHttpServerResponse::Create(TEXT(""), EntryContentMap[InEntry.Content]);
 
-				const bool bFailed = !InEntry.Callback->OnDataOut(Response, Request, InEntry, InRoute, InAPIInstance, UserId)
-					&& !(!InEntry.bEncrypt || InAPIInstance->Encrypt(Data, Data, UserId));
-
+				const bool bFailed = !InEntry.Callback->OnDataOut(Response, Request, InEntry, InRoute, WeakInstance.Get(), UserId)
+					|| !(!InEntry.bEncrypt || WeakInstance->Encrypt(Data, Data, UserId));
+#if WITH_EDITOR
+				UE_LOG(LogTemp, Warning, TEXT("request handling response %s '%s'"), bFailed ? TEXT("Failed") : TEXT("Success"), *InEntry.GetEntryUrl(Identity));
+#endif
 				if (bFailed)
 				{
 					Response = FHttpServerResponse::Create(TEXT(""), EntryContentMap[EAPIEntryContent::Text]);
@@ -314,4 +351,252 @@ bool FVActAPI::_Unsafe_Entry(UAPIInstance* InAPIInstance, UAPIRoute* InRoute, FA
 	);
 
 	return Handle.IsValid();
+}
+
+
+bool FVActAPI::_Unsafe_Certificate(UAPIInstance* InAPIInstance)
+{
+	// https://blog.devgenius.io/how-to-generate-self-signed-ssl-certificates-b85562830ab
+
+	FString Address;
+	int64 Ip;
+	int32 Port;
+
+	bool bSuccess = InAPIInstance->GetAddress(Address, Ip, Port, false);
+	if (bSuccess)
+	{
+		FAPICertificate& Certification = InAPIInstance->Certification;
+		RSA* Key = RSA_new();
+
+		BIGNUM* Exp = BN_new();
+		BN_set_word(Exp, RSA_F4);
+		RSA_generate_key_ex(Key, 2048, Exp, nullptr);
+
+		EVP_PKEY* PrivateKey = EVP_PKEY_new();
+		EVP_PKEY_assign_RSA(PrivateKey, Key);
+
+		X509* Certificate = X509_new();
+		X509_set_version(Certificate, 2);
+		ASN1_INTEGER_set(X509_get_serialNumber(Certificate), static_cast<long>(FPlatformTime::Cycles()));
+
+		X509_NAME* Name = X509_NAME_new();
+		X509_NAME_add_entry_by_txt(Name, "CN", MBSTRING_ASC, (unsigned char*)TCHAR_TO_UTF8(*Address), -1, -1, 0);
+		X509_set_subject_name(Certificate, Name);
+		X509_set_issuer_name(Certificate, Name);
+
+		X509_gmtime_adj(X509_get_notBefore(Certificate), Certification.DurationFrom);
+		X509_gmtime_adj(X509_get_notAfter(Certificate), Certification.DurationTo);
+
+		X509_set_pubkey(Certificate, PrivateKey);
+
+		X509_EXTENSION* Extension = X509V3_EXT_conf_nid(nullptr, nullptr, NID_subject_alt_name, 
+			TCHAR_TO_UTF8(*FString::Printf(TEXT("DNS:localhost,IP:127.0.0.1,IP:%s"), *Address))
+		);
+		X509_add_ext(Certificate, Extension, -1);
+
+		X509_sign(Certificate, PrivateKey, EVP_sha256());
+
+		Certification.Certificate = FPaths::ProjectSavedDir() / TEXT("server.crt");
+		Certification.PrivateKey = FPaths::ProjectSavedDir() / TEXT("server.key");
+
+		BIO* BinaryOut = BIO_new(BIO_s_mem());
+		TArray<uint8> Buffer;
+		
+		bSuccess &= BinaryOut != nullptr;
+		if (bSuccess)
+		{
+			PEM_write_bio_X509(BinaryOut, Certificate);
+			const int32 CertificateSize = BIO_pending(BinaryOut);
+			Buffer.SetNumUninitialized(CertificateSize, EAllowShrinking::No);
+			BIO_read(BinaryOut, Buffer.GetData(), CertificateSize);
+
+			bSuccess &= FFileHelper::SaveArrayToFile(Buffer, *Certification.Certificate);
+		}
+
+		BIO_reset(BinaryOut);
+
+		if (bSuccess)
+		{
+			PEM_write_bio_PrivateKey(BinaryOut, PrivateKey, nullptr, nullptr, 0, nullptr, nullptr);
+			const int32 PrivateKeySize = BIO_pending(BinaryOut);
+			Buffer.SetNumUninitialized(PrivateKeySize, EAllowShrinking::No);
+			BIO_read(BinaryOut, Buffer.GetData(), PrivateKeySize);
+
+			bSuccess &= FFileHelper::SaveArrayToFile(Buffer, *Certification.PrivateKey);
+		}
+
+		BIO_free(BinaryOut);
+		X509_EXTENSION_free(Extension);
+		BN_free(Exp);
+		X509_free(Certificate);
+		EVP_PKEY_free(PrivateKey);
+
+#if WITH_EDITOR
+		UE_LOG(LogTemp, Warning, TEXT("Generated Https for '%s' at\n\t - Certificate '%s'\n\t - Key '%s'"), *Address, *Certification.Certificate, *Certification.PrivateKey);
+#endif
+	}
+
+	return bSuccess;
+}
+
+bool FVActAPI::_Unsafe_Token(const uint8* Buffer, int32 NumBuffer, const uint8* Token, int32 NumToken, int32& Pivot, bool bConsume = true)
+{
+	if (Pivot + NumToken > NumBuffer) { return false; }
+
+	int32 _Pivot = Pivot;
+	for (int32 Index = 0; Index < NumToken && _Pivot < NumBuffer; ++Index, ++_Pivot)
+	{
+		if (Buffer[_Pivot] != Token[Index]) { return false; }
+	}
+	if (bConsume) { Pivot = _Pivot; }
+	return true;
+}
+
+bool FVActAPI::_Unsafe_TokenNot(const uint8* Buffer, int32 NumBuffer, const uint8* Token, int32 NumToken, int32& Pivot, bool bConsume = true)
+{
+	if (Pivot + NumToken > NumBuffer)
+	{
+		if (bConsume) { Pivot = NumBuffer; }
+		return true;
+	}
+
+	int32 _Pivot = Pivot;
+	bool bValid = false;
+	for (; _Pivot < NumBuffer; ++_Pivot)
+	{
+		const bool bMatch = _Unsafe_Token(Buffer, NumBuffer, Token, NumToken, _Pivot, false);
+		if (bMatch) { break; }
+		bValid = true;
+	}
+	
+	if (bValid && bConsume) { Pivot = _Pivot; }
+	return true;
+}
+
+bool FVActAPI::_Unsafe_TokenRangeNot(const uint8* Buffer, int32 NumBuffer, uint8 From, uint8 To, int32& Pivot, bool bConsume = true)
+{
+	int32 _Pivot = Pivot;
+	bool bValid = false;
+	for (; _Pivot < NumBuffer; ++_Pivot)
+	{
+		uint8 _Byte = Buffer[_Pivot];
+		if (_Byte >= From && _Byte <= To) { break; }
+		bValid = true;
+	}
+	if (bValid && bConsume) { Pivot = _Pivot; }
+	return bValid;
+}
+
+bool FVActAPI::_Unsafe_Multipart(const FHttpServerRequest& Request, TMap<FString, FAPIConstFormEntry>& Map)
+{
+	static const FString FieldBoudaryKey = TEXT("boundary=");
+	static const FString HeaderContentType = TEXT("Content-Type");
+	const TArray<FString>& HeaderValues = Request.Headers[HeaderContentType];
+	
+	int32 _BondaryPos = HeaderValues[0].Find(FieldBoudaryKey);
+	FTCHARToUTF8 Boundary(*HeaderValues[0].Mid(_BondaryPos + FieldBoudaryKey.Len()));
+	
+	TArray<uint8> BDN_T((uint8*)Boundary.Get(), Boundary.Length());
+	_VACTAPI_MPFD_CTX_E(CTX_E);
+	_VACTAPI_MPFD_HDR_E(HDR_E);
+
+	const uint8* Buffer = Request.Body.GetData();
+	const int32 NumBuffer = Request.Body.Num();
+	
+	const uint8* _BDN_T = BDN_T.GetData();
+	const uint8* _CTX_E = CTX_E.GetData();
+	const uint8* _HDR_E = HDR_E.GetData();
+	
+	const int32 N_BDN_T = BDN_T.Num();
+	const int32 N_CTX_E = CTX_E.Num();
+	const int32 N_HDR_E = HDR_E.Num();
+
+	TArrayView<const uint8> Segment;
+	FAPIConstFormEntry Entry;
+
+	int32 Pivot = 0;
+	int32 _Start = 0;
+	int32 _End = 0;
+	bool bNext = true
+		&& _Unsafe_Token(Buffer, NumBuffer, _CTX_E, N_CTX_E, Pivot, true)
+		&& _Unsafe_Token(Buffer, NumBuffer, _BDN_T, N_BDN_T, Pivot, true);
+	
+	while (Pivot < NumBuffer)
+	{
+		_End = Pivot;
+		bNext = _Unsafe_Token(Buffer, NumBuffer, _CTX_E, N_CTX_E, Pivot, true)
+			&& _Unsafe_Token(Buffer, NumBuffer, _BDN_T, N_BDN_T, Pivot, true)
+			&& _Unsafe_Token(Buffer, NumBuffer, _HDR_E, N_HDR_E, Pivot, true);
+
+		if (bNext)
+		{
+			if (_End > 0)
+			{
+				Segment = TArrayView<const uint8>(Buffer + _Start, _End - _Start);
+				_Unsafe_Multipart(Segment, Entry);
+			}
+			_Start = Pivot;
+		}
+	}
+
+	return false;
+}
+
+bool FVActAPI::_Unsafe_Multipart(const TArrayView<const uint8>& Segment, FAPIConstFormEntry& Entry)
+{
+	_VACTAPI_MPFD_CTX_E(CTX_E);
+	_VACTAPI_MPFD_HDR_E(HDR_E);
+	_VACTAPI_MPFD_CTX_D(CTX_D);
+	_VACTAPI_MPFD_CTX_T(CTX_T);
+
+	const uint8* _HDR_E = HDR_E.GetData();
+	const int32 N_HDR_E = HDR_E.Num();
+
+	const uint8* _CTX_D = CTX_D.GetData();
+	const uint8* _CTX_T = CTX_T.GetData();
+
+	const int32 N_CTX_D = CTX_D.Num();
+	const int32 N_CTX_T = CTX_T.Num();
+
+	const uint8* Buffer = Segment.GetData();
+	const int32 NumBuffer = Segment.Num();
+
+	int32 Pivot = 0;
+	int32 _Start = 0;
+	int32 _End = 0;
+	int32 _BodyStart = 0;
+	bool bNextHeader = true;
+	bool bBody = false;
+
+	while (Pivot < NumBuffer)
+	{
+		_End = Pivot;
+		bNextHeader = _Unsafe_TokenRangeNot(Buffer, NumBuffer, '\n', '\r', Pivot, true)
+			&& _Unsafe_Token(Buffer, NumBuffer, _HDR_E, N_HDR_E, Pivot, true);
+
+		if (bNextHeader)
+		{
+			// handle headers;
+		}
+		else
+		{
+			bBody = _Unsafe_Token(Buffer, NumBuffer, _HDR_E, N_HDR_E, Pivot, true);
+			if (bBody)
+			{
+				Entry.Body = TArrayView<const uint8>(Buffer + Pivot, NumBuffer);
+				// consume untill !boundary if not aware of NumBuffer
+				return true;
+			}
+		}
+	}
+}
+
+bool FVActAPI::_Unsafe_Multipart(const FHttpServerRequest& Request, FAPIConstFormEntry& Entry)
+{
+
+}
+
+bool FVActAPI::_Unsafe_Multipart(const FHttpServerRequest& Request, const FString& Target, TArray<FAPIConstFormEntry>& Entries)
+{
+
 }

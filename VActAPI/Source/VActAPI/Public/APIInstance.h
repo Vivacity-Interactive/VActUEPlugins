@@ -17,7 +17,11 @@ class VACTAPI_API UAPIInstance : public UObject
 {
     GENERATED_BODY()
 
+    TSharedPtr<FInternetAddr> Address;
+    
     TMap<FGuid, FAPIUser> Users;
+
+    // Tokens and Codes needs some guards like ip, context-identifier, user-identifier and use count
 
     TMap<FGuid, float> Tokens;
 
@@ -28,6 +32,12 @@ class VACTAPI_API UAPIInstance : public UObject
 public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     uint8 bTrackEntryHandles : 1;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    uint8 bUseHttps : 1;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    uint8 bEnableTick : 1;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     int32 MaxCollisionRetry;
@@ -66,6 +76,9 @@ public:
     static void HashCode(const FString& Code, int64& Hash);
 
     UFUNCTION(BlueprintCallable)
+    bool GetAddress(FString& OutAddress, int64& OutIp, int32& OutPort, bool bWithPort = true);
+
+    UFUNCTION(BlueprintCallable)
     bool NewCode(FString& Code, float LifeTime);
 
     UFUNCTION(BlueprintCallable)
@@ -95,6 +108,11 @@ public:
 
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
     bool DeInit(
+    );
+
+    UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+    bool Tick(
+        float DeltaTime 
     );
 
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)

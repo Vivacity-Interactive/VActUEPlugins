@@ -1,10 +1,17 @@
 #include "APIInstance.h"
 #include "VActAPI.h"
 
+#include "Sockets.h"
+#include "SocketSubsystem.h"
+#include "Interfaces/IPv4/IPv4Address.h"
+#include "IPAddress.h"
+
 #include "Misc/Char.h"
 
 UAPIInstance::UAPIInstance()
 	: bTrackEntryHandles(true)
+	, bUseHttps(false)
+	, bEnableTick(false)
 	, MaxCollisionRetry(10)
 	, CodeSymbols(TEXT("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"))
 {
@@ -43,6 +50,25 @@ void UAPIInstance::HashCode(const FString& Code, int64& Hash)
 		_Hash |= (uint64)(uint8)_Char << (8 * Index);
 	}
 	Hash = static_cast<int64>(_Hash);
+}
+
+bool UAPIInstance::GetAddress(FString& OutAddress, int64& OutIp, int32& OutPort, bool bWithPort)
+{
+	bool bCanBindAll;
+	
+	const bool bValid = Address.IsValid() && Address->IsValid()
+		|| (Address = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->GetLocalHostAddr(*GLog, bCanBindAll))->IsValid();
+	
+	if (bValid)
+	{
+		uint32 _Ip;
+		OutAddress = Address->ToString(bWithPort); 
+		Address->GetIp(_Ip);
+		OutIp = static_cast<int64>(_Ip);
+		OutPort = Address->GetPort();
+	}
+
+	return bValid;
 }
 
 bool UAPIInstance::NewCode(FString& Code, float LifeTime)
@@ -149,6 +175,15 @@ bool UAPIInstance::Init_Implementation(
 {
 	FHttpServerModule& HttpModule = FHttpServerModule::Get();
 
+	if (bUseHttps)
+	{
+		const bool bHttps = FVActAPI::Certificate(this);
+
+#if WITH_EDITOR
+		UE_LOG(LogTemp, Warning, TEXT("%s Https %s"), *GetNameSafe(this), bHttps ? TEXT("Success") : TEXT("Failur"));
+#endif
+	}
+
 	FGuid UserId;
 	for (auto& User : DefaultUsers)
 	{
@@ -164,11 +199,11 @@ bool UAPIInstance::Init_Implementation(
 			continue;
 		}
 
+		Route->HttpRouter = HttpModule.GetHttpRouter(Route->Port, true);
 		int32 ServerPortMax = Route->Port + Route->PortMaxOffset;
-		while (!Route->HttpRouter && Route->Port <= ServerPortMax)
+		while (!Route->HttpRouter && ++Route->Port <= ServerPortMax)
 		{
 			Route->HttpRouter = HttpModule.GetHttpRouter(Route->Port, true);
-			++Route->Port;
 		}
 
 		if (!Route->HttpRouter)
@@ -178,7 +213,6 @@ bool UAPIInstance::Init_Implementation(
 #endif
 			continue;
 		}
-
 #if WITH_EDITOR
 		UE_LOG(LogTemp, Warning, TEXT("%s Route Started '%s' at '%d'"), *GetNameSafe(this), *GetNameSafe(Route.Get()), Route->Port);
 #endif
@@ -199,13 +233,16 @@ bool UAPIInstance::Init_Implementation(
 	}
 
 #if WITH_EDITOR
-	FString _DEBUG_Code;
 	int64 _DEBUG_HashCode;
-	NewCode(_DEBUG_Code, 0.5f);
+	FGuid _DEBUG_Token;
+	FString _DEBUG_Code = TEXT("T0Iuctvk");
+	FGuid::Parse(TEXT("1dd006b5-d184-4b1b-8388-b949b913a055"), _DEBUG_Token);
 	HashCode(_DEBUG_Code, _DEBUG_HashCode);
+	Codes.Add(_DEBUG_HashCode, UE_MAX_FLT);
+	Tokens.Add(_DEBUG_Token, UE_MAX_FLT);
 	UE_LOG(LogTemp, Warning, TEXT("Debug Code '%s'/%d"), *_DEBUG_Code, _DEBUG_HashCode);
+	UE_LOG(LogTemp, Warning, TEXT("Debug Token '%s'"), *_DEBUG_Token.ToString());
 #endif
-
 	HttpModule.StartAllListeners();
 	return true;
 }
@@ -224,11 +261,53 @@ bool UAPIInstance::DeInit_Implementation(
 			for (auto& Handle : Route->Handles)
 			{
 				const bool bHandle = Handle.IsValid();
-				if (bHandle) { Route->HttpRouter->UnbindRoute(Handle); }
+				if (bHandle)
+				{ 
+					Route->HttpRouter->UnbindRoute(Handle);
+					Handle.Reset();
+				}
 			}
 
 			Route->HttpRouter.Reset();
-		}		
+		}	
+	}
+
+	return true;
+}
+
+bool UAPIInstance::Tick_Implementation(
+	float DeltaTime
+)
+{
+	if (bEnableTick)
+	{
+		for (auto It = Tokens.CreateIterator(); It; ++It)
+		{
+			auto& Value = It.Value();
+			Value -= DeltaTime;
+			const bool bRemove = Value <= 0.0f;
+			if (bRemove) { It.RemoveCurrent(); }
+		}
+
+		for (auto It = Codes.CreateIterator(); It; ++It)
+		{
+			auto& Value = It.Value();
+			Value -= DeltaTime;
+			const bool bRemove = Value <= 0.0f;
+			if (bRemove) { It.RemoveCurrent(); }
+		}
+
+		for (auto It = Users.CreateIterator(); It; ++It)
+		{
+			auto& User = It.Value();
+			User.SessionTime -= DeltaTime;
+
+			const bool bRemove = User.SessionTime <= 0.0f;
+			if (bRemove) { It.RemoveCurrent(); continue; }
+			
+			User.CodeTime -= DeltaTime;
+			CreateCode(User.Secret.Code, CodeSymbols);
+		}
 	}
 
 	return true;

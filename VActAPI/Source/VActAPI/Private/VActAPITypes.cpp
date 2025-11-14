@@ -22,8 +22,10 @@ FAPIIdentity::FAPIIdentity(FString InServerUnique, FString InScopeUnique, int32 
 }
 
 FAPICertificate::FAPICertificate()
-	: Certificate(TEXT("Cert/server.crt"))
-	, PrivateKey(TEXT("Cert/server.key"))
+	: DurationFrom(0l)
+	, DurationTo(60l * 60l * 24l)
+	, Certificate(TEXT(""))
+	, PrivateKey(TEXT(""))
 {
 
 }

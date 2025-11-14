@@ -33,6 +33,9 @@ public class VActAPI : ModuleRules
                 "HTTP",
                 "Networking",
                 "ImageCore",
+                "Sockets",
+                "SSL",
+                "OpenSSL",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -48,6 +51,7 @@ public class VActAPI : ModuleRules
                 "ImageWrapper",
                 "RHI",
                 "RenderCore",
+                "Projects",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

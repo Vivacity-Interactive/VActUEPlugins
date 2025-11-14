@@ -89,7 +89,7 @@ bool UAPIServerImageUploadPrompt::OnDataOut(
 			: TEXT("");
 		
 		FString _Prompt = Prompt
-			.Replace(TEXT("{{ContentType}}"), *FVActAPI::EntryModeMap[ActionEntry.Mode])
+			.Replace(TEXT("{{ContentType}}"), *FVActAPI::EntryContentMap[ActionEntry.Content])
 			.Replace(TEXT("{{ActionUrl}}"), *ActionEntry.GetEntryUrl(Instance->Identity, SessionPathToken, RequestCodeToken, true, true))
 			.Replace(TEXT("{{AcceptFormats}}"), *AcceptFormats)
 			.Replace(TEXT("{{Key}}"), *Key);
