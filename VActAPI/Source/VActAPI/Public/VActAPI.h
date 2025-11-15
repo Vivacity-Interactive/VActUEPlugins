@@ -24,6 +24,18 @@ struct VACTAPI_API FVActAPI
 {
 	GENERATED_BODY()
 
+	static const TArray<uint8> MPFD_Ctx;
+
+	static const TArray<uint8> MPFD_Hdr;
+
+	static const TArray<uint8> MPFD_Ign;
+
+	static const uint8 MPFD_Lst;
+
+	static const uint8 MPFD_Val;
+
+	static const uint8 MPFD_Key;
+
 	static const FString AuthorizationKey;
 
 	static const FString SessionPathTokenKey;
@@ -71,29 +83,29 @@ struct VACTAPI_API FVActAPI
 		return bValid && _Unsafe_Certificate(InAPIInstance);
 	}
 
-	FORCEINLINE static bool Multipart(const FHttpServerRequest& Request, TMap<FString, FAPIConstFormEntry>& Map)
+	FORCEINLINE static bool Multipart(const FHttpServerRequest& Request, TArray<FAPIConstMultipartSegment>& Segments)
 	{
 		const TArray<FString>* ContentType = Request.Headers.Find("Content-Type");
 		const bool bValid = ContentType != nullptr;
-		return bValid && _Unsafe_Multipart(Request, Map);
+		return bValid && _Unsafe_Multipart(Request, Segments);
 	}
 
 	static bool _Unsafe_Entry(UAPIInstance* InAPIInstance, UAPIRoute* InRoute, FAPIEntry& InEntry, FName& OutName, FHttpRouteHandle& Handle);
 
 	static bool _Unsafe_Certificate(UAPIInstance* InAPIInstance);
 
-	static bool _Unsafe_Multipart(const FHttpServerRequest& Request, TMap<FString, FAPIConstFormEntry>& Map);
+	static bool _Unsafe_Headers(TArrayView<const uint8>& Headers, TMap<FString, TArray<FString>>& OutHeaders);
 
-	static bool _Unsafe_Multipart(const TArrayView<const uint8>& Segment, FAPIConstFormEntry& Entry);
-
-	static bool _Unsafe_Multipart(const FHttpServerRequest& Request, FAPIConstFormEntry& Entry);
-
-	static bool _Unsafe_Multipart(const FHttpServerRequest& Request, const FString& Target, TArray<FAPIConstFormEntry>& Entries);
+	static bool _Unsafe_Multipart(const FHttpServerRequest& Request, TArray<FAPIConstMultipartSegment>& Segments);
 
 	static bool _Unsafe_Token(const uint8* Buffer, int32 NumBuffer, const uint8* Token, const int32 NumToken, int32& Pivot, bool bConsume = true);
 
-	static bool _Unsafe_TokenNot(const uint8* Buffer, int32 NumBuffer, const uint8* Token, const int32 NumToken, int32& Pivot, bool bConsume = true);
+	static bool _Unsafe_TokenFirst(const uint8* Buffer, int32 NumBuffer, const uint8* Token, const int32 NumToken, int32& Pivot, bool bConsume = true);
 
-	static bool _Unsafe_TokenRangeNot(const uint8* Buffer, int32 NumBuffer, uint8 From, uint8 To, int32& Pivot, bool bConsume = true);
+	static bool _Unsafe_TokenFirst(const uint8* Buffer, int32 NumBuffer, const uint8 Token, int32& Pivot, bool bConsume = true);
+
+	static bool _Unsafe_TokenSkip(const uint8* Buffer, int32 NumBuffer, const uint8 Range[2], int32& Pivot);
+
+	static bool _Unsafe_TokenSkipNot(const uint8* Buffer, int32 NumBuffer, const uint8 Range[2], int32& Pivot);
 
 };

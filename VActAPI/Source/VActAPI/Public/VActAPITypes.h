@@ -248,15 +248,104 @@ struct VACTAPI_API FAPIHash
 };
 
 USTRUCT(BlueprintType, Blueprintable)
+struct VACTAPI_API FAPITokenCondition
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+    uint8 bUser : 1;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+    uint8 bContext : 1;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+    uint8 bScope : 1;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+    uint8 bIp : 1;
+
+    UPROPERTY()
+    FGuid UserId;
+
+    UPROPERTY()
+    uint32 ContextId;
+
+    UPROPERTY()
+    uint32 ScopeId;
+
+    UPROPERTY()
+    uint32 Ip;
+
+    FAPITokenCondition();
+
+    FORCEINLINE bool Assert(const int32& InIp) const
+    {
+        return !bUser && !bContext && !bScope
+            && (!bIp || Ip == InIp);
+    }
+
+    FORCEINLINE bool Assert(const int32& InContextId, const int32& InIp) const
+    {
+        return !bUser && !bScope
+            && (!bContext || ContextId == InContextId)
+            && (!bIp || Ip == InIp);
+    }
+
+    FORCEINLINE bool Assert(const FGuid& InUserId, const int32& InContextId, const int32& InScopeId, const int32& InIp) const
+    {
+        return (!bUser || UserId == InUserId)
+            && (!bContext || ContextId == InContextId)
+            && (!bScope || ScopeId == InScopeId)
+            && (!bIp || Ip == InIp);
+    }
+
+    FORCEINLINE bool operator==(const FAPITokenCondition& Other) const
+    {
+        return Assert(Other.UserId, Other.ContextId, Other.ScopeId, Other.Ip);
+    }
+};
+
+FORCEINLINE uint32 GetTypeHash(const FAPITokenCondition& Key)
+{
+    uint32 Hash = 0;
+    if (Key.bUser) { Hash = HashCombineFast(Hash, GetTypeHash(Key.UserId)); }
+    if (Key.bContext) { Hash = HashCombineFast(Hash, Key.ContextId); };
+    if (Key.bScope) { Hash = HashCombineFast(Hash, Key.ScopeId); };
+    if (Key.bIp) { Hash = HashCombineFast(Hash, Key.Ip); }
+    return Hash;
+}
+
+USTRUCT(BlueprintType, Blueprintable)
+struct VACTAPI_API FAPITokenEvent
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float Duration;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 Count;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    FAPITokenCondition Condition;
+
+    FAPITokenEvent();
+
+    FAPITokenEvent(float InDuration, int32 InCount = 1);
+
+    FAPITokenEvent(int32 InCount);
+};
+
+USTRUCT(BlueprintType, Blueprintable)
 struct VACTAPI_API FAPIUser
 {
     GENERATED_BODY()
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "State")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     uint8 bAuthenticated : 1;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    float SessionTime;
+    FAPITokenEvent SessionEvent;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     float AuthenticationTime;
@@ -264,7 +353,7 @@ struct VACTAPI_API FAPIUser
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     float CodeTime;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    UPROPERTY(BlueprintReadWrite)
     FAPIHash Hash;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -280,17 +369,15 @@ struct VACTAPI_API FAPIUser
     FAPIUser(FAPIToken InToken, FAPISecret InSecret);
 };
 
-struct VACTAPI_API FAPIConstFormEntry
+struct VACTAPI_API FAPIConstMultipartSegment
 {
-    FString ContentType;
+    FString Type;
 
-    FString ContentDisposition;
+    FString Disposition;
 
-    FString FieldName;
+    FString Name;
 
-    //TMap<FString, FString> DispositionFields;
-
-    //TMap<FString, TArray<FString>> Headers;
+    TArrayView<const uint8> Headers;
 
     TArrayView<const uint8> Body;
 };

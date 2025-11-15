@@ -24,8 +24,8 @@ bool UAPIServerImageUpload::OnDataIn(
 	FGuid& UserId
 )
 {
-	TMap<FString, FAPIConstFormEntry> Form;
-	bool bSuccess = Request.Body.Num() > 0 && FVActAPI::Multipart(Request, Form);
+	TArray<FAPIConstMultipartSegment> FormSegments;
+	bool bSuccess = Request.Body.Num() > 0 && FVActAPI::Multipart(Request, FormSegments) && FormSegments.Num() > 0;
 	UTexture2D* Image = nullptr;
 
 #if WITH_EDITOR
@@ -35,8 +35,9 @@ bool UAPIServerImageUpload::OnDataIn(
 	if (bSuccess)
 	{
 		FImage _Image;
+		FAPIConstMultipartSegment& Segment = FormSegments[0];
 		IImageWrapperModule& ImageWrapperModule = FModuleManager::LoadModuleChecked<IImageWrapperModule>("ImageWrapper");
-		EImageFormat Format = ImageWrapperModule.DetectImageFormat(Request.Body.GetData(), Request.Body.Num());
+		EImageFormat Format = ImageWrapperModule.DetectImageFormat(Segment.Body.GetData(), Segment.Body.Num());
 #if WITH_EDITOR
 		UE_LOG(LogTemp, Warning, TEXT("%s starting image request"), *GetNameSafe(this));
 #endif
@@ -46,7 +47,7 @@ bool UAPIServerImageUpload::OnDataIn(
 #if WITH_EDITOR
 		UE_LOG(LogTemp, Warning, TEXT("%s format image valid"), *GetNameSafe(this));
 #endif
-		const bool bDecompressed = ImageWrapperModule.DecompressImage(Request.Body.GetData(), Request.Body.Num(), _Image);
+		const bool bDecompressed = ImageWrapperModule.DecompressImage(Segment.Body.GetData(), Segment.Body.Num(), _Image);
 		if (!bDecompressed) { return false; }
 
 #if WITH_EDITOR

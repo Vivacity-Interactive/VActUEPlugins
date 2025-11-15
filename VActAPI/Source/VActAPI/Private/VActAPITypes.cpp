@@ -145,9 +145,43 @@ void FAPIEntry::SecurityIntersectInto(FAPIEntry& Into) const
 	Into.bAuthenticate |= bAuthenticate;
 }
 
+FAPITokenCondition::FAPITokenCondition()
+	: bUser(false)
+	, bContext(false)
+	, bScope(false)
+	, bIp(false)
+	, UserId()
+	, ContextId(0)
+	, ScopeId(0)
+	, Ip(0)
+{
+
+}
+
+FAPITokenEvent::FAPITokenEvent()
+	: Duration(11.0f)
+	, Count(1)
+{
+
+}
+
+FAPITokenEvent::FAPITokenEvent(float InDuration, int32 InCount)
+	: Duration(InDuration)
+	, Count(InCount)
+{
+
+}
+
+FAPITokenEvent::FAPITokenEvent(int32 InCount)
+	: Duration(FLT_MAX)
+	, Count(InCount)
+{
+
+}
+
 FAPIUser::FAPIUser()
 	: bAuthenticated(false)
-	, SessionTime(0.0f)
+	, SessionEvent(0.0f)
 	, AuthenticationTime(0.0f)
 	, CodeTime(0.0f)
 	, Token()
@@ -158,7 +192,7 @@ FAPIUser::FAPIUser()
 
 FAPIUser::FAPIUser(FAPIToken InToken)
 	: bAuthenticated(false)
-	, SessionTime(0.0f)
+	, SessionEvent(0.0f)
 	, AuthenticationTime(0.0f)
 	, CodeTime(0.0f)
 	, Token(InToken)
@@ -169,7 +203,7 @@ FAPIUser::FAPIUser(FAPIToken InToken)
 
 FAPIUser::FAPIUser(FAPIToken InToken, FAPISecret InSecret)
 	: bAuthenticated(false)
-	, SessionTime(0.0f)
+	, SessionEvent(0.0f)
 	, AuthenticationTime(0.0f)
 	, CodeTime(0.0f)
 	, Token(InToken)

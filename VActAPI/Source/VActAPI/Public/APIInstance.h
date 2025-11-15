@@ -18,14 +18,12 @@ class VACTAPI_API UAPIInstance : public UObject
     GENERATED_BODY()
 
     TSharedPtr<FInternetAddr> Address;
-    
+
     TMap<FGuid, FAPIUser> Users;
 
-    // Tokens and Codes needs some guards like ip, context-identifier, user-identifier and use count
+    TMap<FGuid, FAPITokenEvent> Tokens;
 
-    TMap<FGuid, float> Tokens;
-
-    TMap<int64, float> Codes;
+    TMap<int64, FAPITokenEvent> Codes;
 
     TMap<FSHAHash, FAPIUser> Accounts;
 
@@ -33,7 +31,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     uint8 bTrackEntryHandles : 1;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    UPROPERTY()
     uint8 bUseHttps : 1;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -51,10 +49,10 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FAPICertificate Certification;
 
-    //UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    //UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "API Connect")
     //FAPISecret InSecret;
 
-    //UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    //UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "API Connect")
     //FAPIToken InToken;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -75,14 +73,17 @@ public:
     UFUNCTION(BlueprintCallable, Category = "VAct API")
     static void HashCode(const FString& Code, int64& Hash);
 
+    UFUNCTION(BlueprintCallable, Category = "VAct API")
+    static void HashSecret(FString& Into, const FString& Secret, const FString& Salt, int32 Iteration = 10000);
+
     UFUNCTION(BlueprintCallable)
     bool GetAddress(FString& OutAddress, int64& OutIp, int32& OutPort, bool bWithPort = true);
 
     UFUNCTION(BlueprintCallable)
-    bool NewCode(FString& Code, float LifeTime);
+    bool NewCode(FString& Code, float LifeTime, int32 UseCount = -1);
 
     UFUNCTION(BlueprintCallable)
-    bool NewToken(FGuid& Token, float LifeTime);
+    bool NewToken(FGuid& Token, float LifeTime, int32 UseCount = -1);
 
     UFUNCTION(BlueprintCallable)
     bool CreateUser(FGuid& UserId, FGuid PreferedUserId, bool bUsePreferedUserId = false);
@@ -112,7 +113,7 @@ public:
 
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
     bool Tick(
-        float DeltaTime 
+        float DeltaTime
     );
 
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)

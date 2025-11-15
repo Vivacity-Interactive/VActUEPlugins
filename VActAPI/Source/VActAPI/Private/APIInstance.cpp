@@ -1,6 +1,9 @@
 #include "APIInstance.h"
 #include "VActAPI.h"
 
+#include "Misc/SecureHash.h"
+#include "Misc/Base64.h"
+
 #include "Sockets.h"
 #include "SocketSubsystem.h"
 #include "Interfaces/IPv4/IPv4Address.h"
@@ -52,6 +55,30 @@ void UAPIInstance::HashCode(const FString& Code, int64& Hash)
 	Hash = static_cast<int64>(_Hash);
 }
 
+void UAPIInstance::HashSecret(FString& Into, const FString& Secret, const FString& Salt, int32 Iterations)
+{
+	FTCHARToUTF8 _Secret(*Secret);
+	FTCHARToUTF8 _Salt(*Salt);
+
+	TArray<uint8> Temp;
+	Temp.Append((uint8*)_Secret.Get(), _Secret.Length());
+	Temp.Append((uint8*)_Salt.Get(), _Salt.Length());
+	
+	uint8 Digest[FSHA1::DigestSize];
+	for (int32 i = 0; i < Iterations; i++)
+	{
+		FSHA1 Hash;
+		Hash.Update(Temp.GetData(), Temp.Num());
+		Hash.Final();
+		Hash.GetHash(Digest);
+
+		Temp.SetNum(FSHA1::DigestSize);
+		FMemory::Memcpy(Temp.GetData(), Digest, FSHA1::DigestSize);
+	}
+
+	Into = FBase64::Encode(Digest, FSHA1::DigestSize);
+}
+
 bool UAPIInstance::GetAddress(FString& OutAddress, int64& OutIp, int32& OutPort, bool bWithPort)
 {
 	bool bCanBindAll;
@@ -71,7 +98,7 @@ bool UAPIInstance::GetAddress(FString& OutAddress, int64& OutIp, int32& OutPort,
 	return bValid;
 }
 
-bool UAPIInstance::NewCode(FString& Code, float LifeTime)
+bool UAPIInstance::NewCode(FString& Code, float LifeTime, int32 UseCount)
 {
 	int64 Hash;
 	CreateCode(Code, CodeSymbols);
@@ -88,7 +115,7 @@ bool UAPIInstance::NewCode(FString& Code, float LifeTime)
 
 	if (!bCollision)
 	{
-		Codes.Add(Hash, LifeTime);
+		Codes.Add(Hash, FAPITokenEvent(LifeTime, UseCount));
 #if WITH_EDITOR
 		UE_LOG(LogTemp, Warning, TEXT(" - Debug Code '%s'/%d"), *Code, Hash);
 #endif
@@ -97,7 +124,7 @@ bool UAPIInstance::NewCode(FString& Code, float LifeTime)
 	return !bCollision;
 }
 
-bool UAPIInstance::NewToken(FGuid& Token, float LifeTime)
+bool UAPIInstance::NewToken(FGuid& Token, float LifeTime, int32 UseCount)
 {
 	FPlatformMisc::CreateGuid(Token);
 	bool bCollision = Tokens.Contains(Token);
@@ -109,7 +136,7 @@ bool UAPIInstance::NewToken(FGuid& Token, float LifeTime)
 		bCollision = Tokens.Contains(Token);
 	}
 
-	if (!bCollision) { Tokens.Add(Token, LifeTime); }
+	if (!bCollision) { Tokens.Add(Token, FAPITokenEvent(LifeTime, UseCount)); }
 
 	return !bCollision;
 }
@@ -189,7 +216,12 @@ bool UAPIInstance::Init_Implementation(
 	{
 		CreateUser(UserId, UserId, false);
 		FAPIUser* _User = Users.Find(UserId);
-		if (_User != nullptr) { (*_User) = User; }
+		if (_User != nullptr)
+		{
+			HashSecret(User.Secret.Passphrase, User.Secret.Passphrase, Identity.ScopeUnique);
+			HashSecret(User.Secret.Password, User.Secret.Password, Identity.ScopeUnique);
+			(*_User) = User;
+		}
 	}
 
 	for (auto &Route : Routes)
@@ -238,8 +270,8 @@ bool UAPIInstance::Init_Implementation(
 	FString _DEBUG_Code = TEXT("T0Iuctvk");
 	FGuid::Parse(TEXT("1dd006b5-d184-4b1b-8388-b949b913a055"), _DEBUG_Token);
 	HashCode(_DEBUG_Code, _DEBUG_HashCode);
-	Codes.Add(_DEBUG_HashCode, UE_MAX_FLT);
-	Tokens.Add(_DEBUG_Token, UE_MAX_FLT);
+	Codes.Add(_DEBUG_HashCode, FAPITokenEvent(-1));
+	Tokens.Add(_DEBUG_Token, FAPITokenEvent(-1));
 	UE_LOG(LogTemp, Warning, TEXT("Debug Code '%s'/%d"), *_DEBUG_Code, _DEBUG_HashCode);
 	UE_LOG(LogTemp, Warning, TEXT("Debug Token '%s'"), *_DEBUG_Token.ToString());
 #endif
@@ -283,26 +315,28 @@ bool UAPIInstance::Tick_Implementation(
 	{
 		for (auto It = Tokens.CreateIterator(); It; ++It)
 		{
-			auto& Value = It.Value();
-			Value -= DeltaTime;
-			const bool bRemove = Value <= 0.0f;
+			auto& Event = It.Value();
+			Event.Duration -= DeltaTime;
+			const bool bRemove = Event.Duration <= 0.0f || Event.Count == 0;
 			if (bRemove) { It.RemoveCurrent(); }
 		}
 
 		for (auto It = Codes.CreateIterator(); It; ++It)
 		{
-			auto& Value = It.Value();
-			Value -= DeltaTime;
-			const bool bRemove = Value <= 0.0f;
+			auto& Event = It.Value();
+			Event.Duration -= DeltaTime;
+			const bool bRemove = Event.Duration <= 0.0f || Event.Count == 0;;
 			if (bRemove) { It.RemoveCurrent(); }
 		}
 
 		for (auto It = Users.CreateIterator(); It; ++It)
 		{
 			auto& User = It.Value();
-			User.SessionTime -= DeltaTime;
+			User.SessionEvent.Duration -= DeltaTime;
+			User.AuthenticationTime -= DeltaTime;
+			User.bAuthenticated = User.AuthenticationTime > 0.0f;
 
-			const bool bRemove = User.SessionTime <= 0.0f;
+			const bool bRemove = User.SessionEvent.Duration <= 0.0f;
 			if (bRemove) { It.RemoveCurrent(); continue; }
 			
 			User.CodeTime -= DeltaTime;
@@ -319,7 +353,10 @@ bool UAPIInstance::Bouncer_Implementation(
 {
 	FGuid Token;
 	const bool bValid = FGuid::Parse(SessionPathToken, Token);
-	return bValid && Tokens.Contains(Token);
+	FAPITokenEvent* Event;
+	return bValid 
+		&& (Event = Tokens.Find(Token)) != nullptr 
+		&& (Event->Count < 0 || --Event->Count == 0) && Event->Duration > 0;
 }
 
 bool UAPIInstance::Guard_Implementation(
@@ -328,7 +365,10 @@ bool UAPIInstance::Guard_Implementation(
 )
 {
 	const bool bValid = FGuid::Parse(SessionToken, UserId);
-	return bValid && Users.Contains(UserId);
+	FAPIUser* User;
+	return bValid
+		&& (User = Users.Find(UserId)) != nullptr
+		&& User->SessionEvent.Duration > 0;
 }
 
 bool UAPIInstance::Reception_Implementation(
@@ -337,7 +377,9 @@ bool UAPIInstance::Reception_Implementation(
 {
 	int64 Hash;
 	HashCode(Code, Hash);
-	return Codes.Contains(Hash);
+	FAPITokenEvent* Event = Codes.Find(Hash);
+	return Event != nullptr 
+		&& (Event->Count < 0 || --Event->Count == 0) && Event->Duration > 0;
 }
 
 bool UAPIInstance::Encrypt_Implementation(
@@ -370,6 +412,8 @@ bool UAPIInstance::Authenticate_Implementation(
 	FAPIUser* Account = Accounts.Find(UserHash.Data);
 	
 	const bool bGranted = Account != nullptr 
+		&& !Account->Secret.Password.IsEmpty()
+		&& !Account->Token.Id.IsEmpty()
 		&& Account->Secret.Password == UserPassword
 		&& Account->Token.Id == UserName
 		&& Session(Token, Token, false, UserId);

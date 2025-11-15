@@ -24,11 +24,20 @@ THIRD_PARTY_INCLUDES_END
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 
-#define _VACTAPI_MPFD_CTX_E(InType) static const TArray<uint8> InType({ '-', '-' })
-#define _VACTAPI_MPFD_HDR_E(InType) static const TArray<uint8> InType({ '\r', '\n' })
-#define _VACTAPI_MPFD_CTX_D(InType) static const TArray<uint8> InType({ 'C' ,'o' ,'n' ,'t' ,'e' ,'n' ,'t' ,'-' ,'D' ,'i' ,'s' ,'p' ,'o' ,'s' ,'i' ,'t' ,'i' ,'o' ,'n'  })
-#define _VACTAPI_MPFD_CTX_T(InType) static const TArray<uint8> InType({ 'C' ,'o' ,'n' ,'t' ,'e' ,'n' ,'t' ,'-' ,'T' ,'y' ,'p' ,'e'  })
-//#define _VACTAPI_MPFD_CTX_N(InType) static const TArray<uint8> InType({ 'C' ,'o' ,'n' ,'t' ,'e' ,'n' ,'t' ,'-' ,'L' ,'e' ,'n' ,'g' ,'t' ,'h'  })
+#define _VACTAPI_CONSTUINT8(InLiteral)\
+	TArray<uint8>(reinterpret_cast<const uint8*>(InLiteral), strlen(InLiteral))
+
+const TArray<uint8> FVActAPI::MPFD_Ctx = { '-','-' };
+
+const TArray<uint8> FVActAPI::MPFD_Hdr = { '\r', '\n', '\r', '\n' };
+
+const TArray<uint8> FVActAPI::MPFD_Ign = { '\0',' ' };
+
+const uint8 FVActAPI::MPFD_Lst = ';';
+
+const uint8 FVActAPI::MPFD_Val = '=';
+
+const uint8 FVActAPI::MPFD_Key = ':';
 
 const FString FVActAPI::AuthorizationKey = TEXT("Authorization");
 
@@ -439,7 +448,7 @@ bool FVActAPI::_Unsafe_Certificate(UAPIInstance* InAPIInstance)
 	return bSuccess;
 }
 
-bool FVActAPI::_Unsafe_Token(const uint8* Buffer, int32 NumBuffer, const uint8* Token, int32 NumToken, int32& Pivot, bool bConsume = true)
+bool FVActAPI::_Unsafe_Token(const uint8* Buffer, int32 NumBuffer, const uint8* Token, int32 NumToken, int32& Pivot, bool bConsume)
 {
 	if (Pivot + NumToken > NumBuffer) { return false; }
 
@@ -452,151 +461,142 @@ bool FVActAPI::_Unsafe_Token(const uint8* Buffer, int32 NumBuffer, const uint8* 
 	return true;
 }
 
-bool FVActAPI::_Unsafe_TokenNot(const uint8* Buffer, int32 NumBuffer, const uint8* Token, int32 NumToken, int32& Pivot, bool bConsume = true)
+bool FVActAPI::_Unsafe_TokenFirst(const uint8* Buffer, int32 NumBuffer, const uint8* Token, int32 NumToken, int32& Pivot, bool bConsume)
 {
-	if (Pivot + NumToken > NumBuffer)
-	{
-		if (bConsume) { Pivot = NumBuffer; }
-		return true;
-	}
+	if (Pivot + NumToken > NumBuffer) { return false; }
 
 	int32 _Pivot = Pivot;
 	bool bValid = false;
-	for (; _Pivot < NumBuffer; ++_Pivot)
+	for (int32 Index = 0; Index < NumToken && _Pivot < NumBuffer; ++Index, ++_Pivot)
 	{
-		const bool bMatch = _Unsafe_Token(Buffer, NumBuffer, Token, NumToken, _Pivot, false);
-		if (bMatch) { break; }
-		bValid = true;
+		bValid = Buffer[_Pivot] == Token[Index];
+		if (!bValid) { _Pivot -= Index; Index = -1; bValid = false; }
 	}
-	
-	if (bValid && bConsume) { Pivot = _Pivot; }
-	return true;
+	if (bConsume) { Pivot = _Pivot; }
+	return bValid;
 }
 
-bool FVActAPI::_Unsafe_TokenRangeNot(const uint8* Buffer, int32 NumBuffer, uint8 From, uint8 To, int32& Pivot, bool bConsume = true)
+bool FVActAPI::_Unsafe_TokenFirst(const uint8* Buffer, int32 NumBuffer, const uint8 Token, int32& Pivot, bool bConsume)
 {
 	int32 _Pivot = Pivot;
 	bool bValid = false;
 	for (; _Pivot < NumBuffer; ++_Pivot)
 	{
-		uint8 _Byte = Buffer[_Pivot];
-		if (_Byte >= From && _Byte <= To) { break; }
-		bValid = true;
+		if (Buffer[_Pivot] == Token) { bValid = true; break; }
 	}
 	if (bValid && bConsume) { Pivot = _Pivot; }
 	return bValid;
 }
 
-bool FVActAPI::_Unsafe_Multipart(const FHttpServerRequest& Request, TMap<FString, FAPIConstFormEntry>& Map)
+bool FVActAPI::_Unsafe_TokenSkip(const uint8* Buffer, int32 NumBuffer, const uint8 Range[2], int32& Pivot)
+{
+	for ( ; Pivot < NumBuffer; ++Pivot)
+	{
+		const uint8 Byte = Buffer[Pivot];
+		if (Byte < Range[0] || Byte > Range[1]) { return true; }
+	}
+	return true;
+}
+
+bool FVActAPI::_Unsafe_TokenSkipNot(const uint8* Buffer, int32 NumBuffer, const uint8 Range[2], int32& Pivot)
+{
+	for (; Pivot < NumBuffer; ++Pivot)
+	{
+		const uint8 Byte = Buffer[Pivot];
+		if (Byte >= Range[0] && Byte <= Range[1]) { return true; }
+	}
+	return true;
+}
+
+bool FVActAPI::_Unsafe_Headers(TArrayView<const uint8>& Headers, TMap<FString, TArray<FString>>& OutHeaders)
+{
+	const uint8* Data = Headers.GetData();
+	const int32 Num = Headers.Num();
+
+	bool bHeader = Headers.Num() > 0;
+	int32 Start = 0, End = 0, Pivot = 0;
+	while (bHeader && Pivot < Num)
+	{
+		bHeader = _Unsafe_TokenFirst(Data, Num, MPFD_Key, Pivot, true);
+		if (bHeader)
+		{
+			FUTF8ToTCHAR _Key(reinterpret_cast<const ANSICHAR*>(Data + Start), Pivot - Start);
+			FString Key(_Key.Length(), _Key.Get());
+			_Unsafe_TokenSkip(Data, End, MPFD_Ign.GetData(), Pivot);
+			int32 _Start = Pivot;
+			_Unsafe_TokenSkipNot(Data, End, MPFD_Ign.GetData(), Pivot);
+			FUTF8ToTCHAR _Value(reinterpret_cast<const ANSICHAR*>(Data + _Start), Pivot - _Start);
+			FString Value(_Value.Length(), _Value.Get());
+
+			TArray<FString>* Values = OutHeaders.Find(Key);
+			if (!Values) { OutHeaders.Add(Key, { Value }); }
+			else { Values->Add(Value); }
+			_Unsafe_TokenSkip(Data, End, MPFD_Ign.GetData(), Pivot);
+			Start = Pivot;
+		}
+	}
+	return true;
+}
+
+bool FVActAPI::_Unsafe_Multipart(const FHttpServerRequest& Request, TArray<FAPIConstMultipartSegment>& Segments)
 {
 	static const FString FieldBoudaryKey = TEXT("boundary=");
 	static const FString HeaderContentType = TEXT("Content-Type");
 	const TArray<FString>& HeaderValues = Request.Headers[HeaderContentType];
 	
 	int32 _BondaryPos = HeaderValues[0].Find(FieldBoudaryKey);
-	FTCHARToUTF8 Boundary(*HeaderValues[0].Mid(_BondaryPos + FieldBoudaryKey.Len()));
-	
-	TArray<uint8> BDN_T((uint8*)Boundary.Get(), Boundary.Length());
-	_VACTAPI_MPFD_CTX_E(CTX_E);
-	_VACTAPI_MPFD_HDR_E(HDR_E);
+	FString Bondary = HeaderValues[0].Mid(_BondaryPos + FieldBoudaryKey.Len());
+	FTCHARToUTF8 _Boundary(*Bondary);
+	TArray<uint8> MPFD_Bnd((uint8*)_Boundary.Get(), _Boundary.Length());
+	MPFD_Bnd.Insert(MPFD_Ctx, 0);
+#if WITH_EDITOR
+	FUTF8ToTCHAR _DEBUG_CxBnd(reinterpret_cast<const ANSICHAR*>(MPFD_Bnd.GetData()), MPFD_Bnd.Num());
+	FString _DEBUG_Headers(_DEBUG_CxBnd.Length(), _DEBUG_CxBnd.Get());
+	UE_LOG(LogTemp, Warning, TEXT("bondary '%s'"), *_DEBUG_Headers);
+#endif
 
-	const uint8* Buffer = Request.Body.GetData();
-	const int32 NumBuffer = Request.Body.Num();
-	
-	const uint8* _BDN_T = BDN_T.GetData();
-	const uint8* _CTX_E = CTX_E.GetData();
-	const uint8* _HDR_E = HDR_E.GetData();
-	
-	const int32 N_BDN_T = BDN_T.Num();
-	const int32 N_CTX_E = CTX_E.Num();
-	const int32 N_HDR_E = HDR_E.Num();
+	const uint8* Data = Request.Body.GetData();
+	const int32 Num = Request.Body.Num();
 
-	TArrayView<const uint8> Segment;
-	FAPIConstFormEntry Entry;
-
-	int32 Pivot = 0;
-	int32 _Start = 0;
-	int32 _End = 0;
-	bool bNext = true
-		&& _Unsafe_Token(Buffer, NumBuffer, _CTX_E, N_CTX_E, Pivot, true)
-		&& _Unsafe_Token(Buffer, NumBuffer, _BDN_T, N_BDN_T, Pivot, true);
-	
-	while (Pivot < NumBuffer)
+	int32 Start = 0, End = 0, Pivot = 0;	
+	bool bSegment = _Unsafe_Token(Data, Num, MPFD_Bnd.GetData(), MPFD_Bnd.Num(), Pivot, true);
+	Start = Pivot;
+	bool bValid = false;
+	while (bSegment && Pivot < Num)
 	{
-		_End = Pivot;
-		bNext = _Unsafe_Token(Buffer, NumBuffer, _CTX_E, N_CTX_E, Pivot, true)
-			&& _Unsafe_Token(Buffer, NumBuffer, _BDN_T, N_BDN_T, Pivot, true)
-			&& _Unsafe_Token(Buffer, NumBuffer, _HDR_E, N_HDR_E, Pivot, true);
+		bSegment = _Unsafe_TokenFirst(Data, Num, MPFD_Bnd.GetData(), MPFD_Bnd.Num(), Pivot, true);
 
-		if (bNext)
+		if (bSegment)
 		{
-			if (_End > 0)
-			{
-				Segment = TArrayView<const uint8>(Buffer + _Start, _End - _Start);
-				_Unsafe_Multipart(Segment, Entry);
+			bValid = true;
+			End = Pivot - MPFD_Bnd.Num();
+#if WITH_EDITOR
+			UE_LOG(LogTemp, Warning, TEXT("\tsegment end %d:%d %s"), Start, End, bSegment ? TEXT("True") : TEXT("False"));
+#endif	
+			FAPIConstMultipartSegment Segment;
+			int32 _Pivot = Start;
+			_Unsafe_TokenSkip(Data, End, MPFD_Ign.GetData(), _Pivot);
+#if WITH_EDITOR
+			UE_LOG(LogTemp, Warning, TEXT("\tskipped %d(%d)"), _Pivot, _Pivot - Start);
+#endif
+			int32 _Start = _Pivot;
+			bool bHeader = _Unsafe_TokenFirst(Data, End, MPFD_Hdr.GetData(), MPFD_Hdr.Num(), _Pivot, true);
+			int32 _End = _Pivot;
+			if (bHeader)
+			{ 
+				Segment.Headers = TArrayView<const uint8>(Data + _Start, _End - _Start);
 			}
-			_Start = Pivot;
+			Segment.Body = TArrayView<const uint8>(Data + _End, End - _End);
+#if WITH_EDITOR
+			FUTF8ToTCHAR _DEBUG_CxHdr(reinterpret_cast<const ANSICHAR*>(Segment.Headers.GetData()), Segment.Headers.Num());
+			FString _DEBUG_Headers(_DEBUG_CxHdr.Length(), _DEBUG_CxHdr.Get());
+			UE_LOG(LogTemp, Warning, TEXT("\theaders %d:%d\n%s"), _Start, _End, *_DEBUG_Headers);
+			//FString _DEBUG_Body = BytesToHex(Segment.Body.GetData(), Segment.Body.Num());
+			//UE_LOG(LogTemp, Warning, TEXT("\tbody %d:%d\n%s"), _End, End, *_DEBUG_Body);
+#endif
+			Segments.Add(Segment);
 		}
 	}
 
-	return false;
-}
-
-bool FVActAPI::_Unsafe_Multipart(const TArrayView<const uint8>& Segment, FAPIConstFormEntry& Entry)
-{
-	_VACTAPI_MPFD_CTX_E(CTX_E);
-	_VACTAPI_MPFD_HDR_E(HDR_E);
-	_VACTAPI_MPFD_CTX_D(CTX_D);
-	_VACTAPI_MPFD_CTX_T(CTX_T);
-
-	const uint8* _HDR_E = HDR_E.GetData();
-	const int32 N_HDR_E = HDR_E.Num();
-
-	const uint8* _CTX_D = CTX_D.GetData();
-	const uint8* _CTX_T = CTX_T.GetData();
-
-	const int32 N_CTX_D = CTX_D.Num();
-	const int32 N_CTX_T = CTX_T.Num();
-
-	const uint8* Buffer = Segment.GetData();
-	const int32 NumBuffer = Segment.Num();
-
-	int32 Pivot = 0;
-	int32 _Start = 0;
-	int32 _End = 0;
-	int32 _BodyStart = 0;
-	bool bNextHeader = true;
-	bool bBody = false;
-
-	while (Pivot < NumBuffer)
-	{
-		_End = Pivot;
-		bNextHeader = _Unsafe_TokenRangeNot(Buffer, NumBuffer, '\n', '\r', Pivot, true)
-			&& _Unsafe_Token(Buffer, NumBuffer, _HDR_E, N_HDR_E, Pivot, true);
-
-		if (bNextHeader)
-		{
-			// handle headers;
-		}
-		else
-		{
-			bBody = _Unsafe_Token(Buffer, NumBuffer, _HDR_E, N_HDR_E, Pivot, true);
-			if (bBody)
-			{
-				Entry.Body = TArrayView<const uint8>(Buffer + Pivot, NumBuffer);
-				// consume untill !boundary if not aware of NumBuffer
-				return true;
-			}
-		}
-	}
-}
-
-bool FVActAPI::_Unsafe_Multipart(const FHttpServerRequest& Request, FAPIConstFormEntry& Entry)
-{
-
-}
-
-bool FVActAPI::_Unsafe_Multipart(const FHttpServerRequest& Request, const FString& Target, TArray<FAPIConstFormEntry>& Entries)
-{
-
+	return bValid;
 }
