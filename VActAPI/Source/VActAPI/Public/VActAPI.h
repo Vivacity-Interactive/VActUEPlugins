@@ -30,7 +30,7 @@ struct VACTAPI_API FVActAPI
 
 	static const TArray<uint8> MPFD_Ign;
 
-	static const uint8 MPFD_Lst;
+	static const uint8 MPFD_Prt;
 
 	static const uint8 MPFD_Val;
 
@@ -64,17 +64,17 @@ struct VACTAPI_API FVActAPI
 
 	const static TMap<EAPIImageFormat, EAPIEntryContent> EntryImageContentMapE;
 
-	FORCEINLINE static bool Entry(UAPIInstance* InAPIInstance, UAPIRoute* InRoute, FAPIEntry& InEntry, FName& OutName, FHttpRouteHandle& Handle)
+	FORCEINLINE static bool Entry(UAPIInstance* InAPIInstance, UAPIRoute* InRoute, FAPIEntry& InEntry, FName& OutName, FHttpRouteHandle& Handle, UObject* ContextObject = nullptr)
 	{
 		const bool bValid = InAPIInstance != nullptr && InRoute != nullptr;
-		return bValid && _Unsafe_Entry(InAPIInstance, InRoute, InEntry, OutName, Handle);
+		return bValid && _Unsafe_Entry(InAPIInstance, InRoute, InEntry, OutName, Handle, ContextObject);
 	}
 
-	FORCEINLINE static bool Entry(UAPIInstance* InAPIInstance, UAPIRoute* InRoute, FAPIEntry& InEntry, FName& OutName)
+	FORCEINLINE static bool Entry(UAPIInstance* InAPIInstance, UAPIRoute* InRoute, FAPIEntry& InEntry, FName& OutName, UObject* ContextObject = nullptr)
 	{
 		FHttpRouteHandle Handle;
 		const bool bValid = InAPIInstance != nullptr && InRoute != nullptr;
-		return bValid && _Unsafe_Entry(InAPIInstance, InRoute, InEntry, OutName, Handle);
+		return bValid && _Unsafe_Entry(InAPIInstance, InRoute, InEntry, OutName, Handle, ContextObject);
 	}
 
 	FORCEINLINE static bool Certificate(UAPIInstance* InAPIInstance)
@@ -90,17 +90,21 @@ struct VACTAPI_API FVActAPI
 		return bValid && _Unsafe_Multipart(Request, Segments);
 	}
 
-	static bool _Unsafe_Entry(UAPIInstance* InAPIInstance, UAPIRoute* InRoute, FAPIEntry& InEntry, FName& OutName, FHttpRouteHandle& Handle);
+	static bool _Unsafe_Entry(UAPIInstance* InAPIInstance, UAPIRoute* InRoute, FAPIEntry& InEntry, FName& OutName, FHttpRouteHandle& Handle, UObject* ContextObject = nullptr);
 
 	static bool _Unsafe_Certificate(UAPIInstance* InAPIInstance);
 
-	static bool _Unsafe_Headers(TArrayView<const uint8>& Headers, TMap<FString, TArray<FString>>& OutHeaders);
+	static bool _Unsafe_KeyValue(TArrayView<const uint8>& Property, TArrayView<const uint8>& Key, TArrayView<const uint8>& Value, bool& bKeyOnly);
+	
+	static bool _Unsafe_Properties(TArrayView<const uint8>& Header, TArray<TArrayView<const uint8>>& OutProperties);
+
+	static bool _Unsafe_Headers(TArrayView<const uint8>& Headers, TMap<FString, TArray<TArrayView<const uint8>>>& OutHeaders);
 
 	static bool _Unsafe_Multipart(const FHttpServerRequest& Request, TArray<FAPIConstMultipartSegment>& Segments);
 
 	static bool _Unsafe_Token(const uint8* Buffer, int32 NumBuffer, const uint8* Token, const int32 NumToken, int32& Pivot, bool bConsume = true);
 
-	static bool _Unsafe_TokenFirst(const uint8* Buffer, int32 NumBuffer, const uint8* Token, const int32 NumToken, int32& Pivot, bool bConsume = true);
+	static bool _Unsafe_TokenFirst(const uint8* Buffer, int32 NumBuffer, const uint8* Token, const int32 NumToken, int32& Pivot, bool bConsume = true, bool bResetPivot = true);
 
 	static bool _Unsafe_TokenFirst(const uint8* Buffer, int32 NumBuffer, const uint8 Token, int32& Pivot, bool bConsume = true);
 

@@ -30,7 +30,7 @@ class VACTAPI_API UAPIServerImageUpload : public UAPICallback
 
 public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    uint8 bForceImageRawFormat : 1;
+    uint8 bForceImageFormat : 1;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     EAPIImageFormat ImageFormat;

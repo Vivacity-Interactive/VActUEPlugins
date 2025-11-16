@@ -8,7 +8,7 @@
 #include "IImageWrapperModule.h"
 
 UAPIServerImageUpload::UAPIServerImageUpload()
-	: bForceImageRawFormat(false)
+	: bForceImageFormat(false)
 	, ImageFormat(EAPIImageFormat::Png)
 	, RawImageFormat(EAPIImageRawFormat::BGRA8)
 	, GammaSpace(EAPIGammaSpace::sRGB)
@@ -53,11 +53,20 @@ bool UAPIServerImageUpload::OnDataIn(
 #if WITH_EDITOR
 		UE_LOG(LogTemp, Warning, TEXT("%s image decompressed"), *GetNameSafe(this));
 #endif
-		EPixelFormat _PixelFormat = bForceImageRawFormat
+		EPixelFormat _PixelFormat = bForceImageFormat
 			? FVActAPI::ImageRawFormatMapE[RawImageFormat]
 			: FVActAPI::_ImageRawFormatMapE[_Image.Format];
 
 		Image = UTexture2D::CreateTransient(_Image.SizeX, _Image.SizeY, _PixelFormat);
+		Image->MipGenSettings = TMGS_NoMipmaps;
+		Image->SRGB = true;
+
+		FTexture2DMipMap& Mip = Image->GetPlatformData()->Mips[0];
+		void* Data = Mip.BulkData.Lock(LOCK_READ_WRITE);
+		FMemory::Memcpy(Data, _Image.RawData.GetData(), _Image.RawData.Num());
+		Mip.BulkData.Unlock();
+
+		Image->UpdateResource();
 #if WITH_EDITOR
 		UE_LOG(LogTemp, Warning, TEXT("%s image texture created"), *GetNameSafe(this));
 #endif
@@ -86,7 +95,7 @@ bool UAPIServerImageUpload::OnDataOut(
 
 		if (bRespond)
 		{
-			EGammaSpace _GammaSpace = bForceImageRawFormat
+			EGammaSpace _GammaSpace = bForceImageFormat
 				? FVActAPI::GammaSpaceMapE[GammaSpace]
 				: (Image->SRGB ? EGammaSpace::sRGB : EGammaSpace::Linear);
 
@@ -109,7 +118,7 @@ bool UAPIServerImageUpload::OnDataOut(
 				FTexture2DMipMap& Mip = Image->GetPlatformData()->Mips[0];
 				void* _Data = Mip.BulkData.Lock(LOCK_READ_ONLY);
 
-				ERawImageFormat::Type _RawImageFormat = bForceImageRawFormat
+				ERawImageFormat::Type _RawImageFormat = bForceImageFormat
 					? FVActAPI::_ImageRawFormatMapInvE[FVActAPI::ImageRawFormatMapE[RawImageFormat]]
 					: FVActAPI::_ImageRawFormatMapInvE[PlatformData->PixelFormat];
 
@@ -141,7 +150,7 @@ bool UAPIServerImageUpload::OnDataOut(
 						);
 					});
 
-				ERawImageFormat::Type _RawImageFormat = bForceImageRawFormat
+				ERawImageFormat::Type _RawImageFormat = bForceImageFormat
 					? FVActAPI::_ImageRawFormatMapInvE[FVActAPI::ImageRawFormatMapE[RawImageFormat]]
 					: FVActAPI::_ImageRawFormatMapInvE[ImageHRI->GetFormat()];
 

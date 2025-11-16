@@ -198,6 +198,7 @@ FAPIUser* UAPIInstance::FindUser(const FGuid& UserId)
 }
 
 bool UAPIInstance::Init_Implementation(
+	UObject* ContextObject = nullptr
 )
 {
 	FHttpServerModule& HttpModule = FHttpServerModule::Get();
@@ -253,7 +254,7 @@ bool UAPIInstance::Init_Implementation(
 		{
 			FName EntryName;
 			FHttpRouteHandle EntryHandle;
-			const bool bEntryStarted = FVActAPI::Entry(this, Route, Entry, EntryName, EntryHandle);
+			const bool bEntryStarted = FVActAPI::Entry(this, Route, Entry, EntryName, EntryHandle, ContextObject);
 			if (bEntryStarted)
 			{
 				if (bTrackEntryHandles) { Route->Handles.Add(EntryHandle); }

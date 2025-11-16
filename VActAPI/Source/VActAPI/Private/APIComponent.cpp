@@ -14,7 +14,7 @@ void UAPIComponent::BeginPlay()
 	Super::BeginPlay();
 	if (APIInstance)
 	{
-		APIInstance->Init();
+		APIInstance->Init(this);
 	}
 }
 

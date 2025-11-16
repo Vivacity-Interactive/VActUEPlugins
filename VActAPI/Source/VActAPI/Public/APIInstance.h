@@ -105,6 +105,7 @@ public:
 public:
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
     bool Init(
+        UObject* ContextObject = nullptr
     );
 
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
