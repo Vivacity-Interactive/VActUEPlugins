@@ -25,6 +25,15 @@ enum class EAPIImageFormat : uint8
 };
 
 UENUM(BlueprintType)
+enum class EAPIAudioFormat : uint8
+{
+    Unknown,
+    Ogg,
+    Wav,
+    Acc,
+};
+
+UENUM(BlueprintType)
 enum class EAPIGammaSpace : uint8
 {
     Linear,
@@ -73,9 +82,10 @@ enum class EAPIEntryContent : uint8
     ImageExr,
     ImageHdr,
     Audio,
-    AudioOgg,
+    //AudioOgg,
     AudioWav,
-    AudioAcc,
+    //AudioAcc,
+    //AudioMp3,
     Video,
     VideoMp4,
     VideoMov,

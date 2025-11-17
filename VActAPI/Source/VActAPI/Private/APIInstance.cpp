@@ -262,6 +262,12 @@ bool UAPIInstance::Init_Implementation(
 				UE_LOG(LogTemp, Warning, TEXT("%s Started Entry '%s'\n\tRoute: '%s'\n\tUrl: '%s'\n\tPath: '%s'"), *GetNameSafe(this), *Entry.Name.ToString(), *GetNameSafe(Route.Get()), *Entry.Url, *EntryHandle->Path);
 #endif
 			}
+			else
+			{
+#if WITH_EDITOR
+				UE_LOG(LogTemp, Warning, TEXT("%s something wrong, route not added '%s'"), *GetNameSafe(this), *Entry.Url);
+#endif
+			}
 		}
 	}
 
@@ -285,6 +291,7 @@ bool UAPIInstance::DeInit_Implementation(
 {
 	FHttpServerModule& HttpModule = FHttpServerModule::Get();
 	HttpModule.StopAllListeners();
+	
 
 	for (auto& Route : Routes)
 	{
@@ -300,9 +307,10 @@ bool UAPIInstance::DeInit_Implementation(
 					Handle.Reset();
 				}
 			}
-
+			Route->Handles.Empty();
 			Route->HttpRouter.Reset();
-		}	
+			Route->HttpRouter = nullptr;
+		}
 	}
 
 	return true;

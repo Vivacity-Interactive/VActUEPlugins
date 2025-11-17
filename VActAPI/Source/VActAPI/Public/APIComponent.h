@@ -21,7 +21,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float APITickDuration;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<UAPIInstance> APIInstanceClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UAPIInstance* APIInstance;
 
 public:	

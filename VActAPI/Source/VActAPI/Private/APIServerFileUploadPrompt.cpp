@@ -1,9 +1,9 @@
-#include "APIServerImageUploadPrompt.h"
+#include "APIServerFileUploadPrompt.h"
 #include "APIInstance.h"
 #include "Misc/Guid.h"
 #include "VActAPI.h"
 
-const FString UAPIServerImageUploadPrompt::DefaultPrompt = R"(
+const FString UAPIServerFileUploadPrompt::DefaultPrompt = R"(
 <!DOCTYPE html>
 <html>
   <body>
@@ -16,7 +16,7 @@ const FString UAPIServerImageUploadPrompt::DefaultPrompt = R"(
 </html>
 )";
 
-UAPIServerImageUploadPrompt::UAPIServerImageUploadPrompt()
+UAPIServerFileUploadPrompt::UAPIServerFileUploadPrompt()
 	: bSecurityIntersect(true)
 	, bUseFile(false)
 	, File()
@@ -27,7 +27,7 @@ UAPIServerImageUploadPrompt::UAPIServerImageUploadPrompt()
 
 }
 
-bool UAPIServerImageUploadPrompt::OnDataIn(
+bool UAPIServerFileUploadPrompt::OnDataIn(
 	const FHttpServerRequest& Request,
 	const FAPIEntry& SelfEntry,
 	UAPIRoute* Parent,
@@ -48,7 +48,7 @@ bool UAPIServerImageUploadPrompt::OnDataIn(
 	return bSuccess;
 }
 
-bool UAPIServerImageUploadPrompt::OnDataOut(
+bool UAPIServerFileUploadPrompt::OnDataOut(
 	TUniquePtr<FHttpServerResponse>& Response,
 	const FHttpServerRequest& Request,
 	const FAPIEntry& SelfEntry,
@@ -106,14 +106,14 @@ bool UAPIServerImageUploadPrompt::OnDataOut(
 	return bRespond;
 }
 
-bool UAPIServerImageUploadPrompt::OnPromptIn_Implementation(
+bool UAPIServerFileUploadPrompt::OnPromptIn_Implementation(
 	const FString& InPrompt
 )
 {
 	return true;
 }
 
-bool UAPIServerImageUploadPrompt::OnPromptOut_Implementation(
+bool UAPIServerFileUploadPrompt::OnPromptOut_Implementation(
 	FString& InPrompt
 )
 {
@@ -121,12 +121,12 @@ bool UAPIServerImageUploadPrompt::OnPromptOut_Implementation(
 }
 
 #if WITH_EDITOR
-void UAPIServerImageUploadPrompt::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+void UAPIServerFileUploadPrompt::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 
 	FName PropertyName = PropertyChangedEvent.Property ? PropertyChangedEvent.Property->GetFName() : NAME_None;
-	if (PropertyName == GET_MEMBER_NAME_CHECKED(UAPIServerImageUploadPrompt, SelectedSupportedFormats))
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(UAPIServerFileUploadPrompt, SelectedSupportedFormats))
 	{
 		SupportedFormats.Empty();
 		SupportedFormats.Append(SelectedSupportedFormats);

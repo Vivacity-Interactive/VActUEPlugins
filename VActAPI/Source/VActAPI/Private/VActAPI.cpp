@@ -153,9 +153,10 @@ const TMap<EAPIEntryContent, FString> FVActAPI::EntryContentMap = {
 	{ EAPIEntryContent::ImageExr, TEXT("image/exr")},
 	{ EAPIEntryContent::ImageHdr, TEXT("image/hdr")},
 	{ EAPIEntryContent::Audio, TEXT("multipart/form-data")},
-	{ EAPIEntryContent::AudioOgg, TEXT("audio/ogg")},
+	//{ EAPIEntryContent::AudioOgg, TEXT("audio/ogg")},
 	{ EAPIEntryContent::AudioWav, TEXT("audio/wav")},
-	{ EAPIEntryContent::AudioAcc, TEXT("audio/acc")},
+	//{ EAPIEntryContent::AudioAcc, TEXT("audio/acc")},
+	//{ EAPIEntryContent::AudioMp3, TEXT("audio/mp3")},
 	{ EAPIEntryContent::Video, TEXT("multipart/form-data")},
 	{ EAPIEntryContent::VideoMp4, TEXT("video/mp4")},
 	{ EAPIEntryContent::VideoMov, TEXT("video/mov")},
@@ -184,9 +185,10 @@ const TMap<FString, EAPIEntryContent> FVActAPI::EntryContentMapInv = {
 	{ TEXT("image/exr"), EAPIEntryContent::ImageExr},
 	{ TEXT("image/hdr"), EAPIEntryContent::ImageHdr},
 	//{ TEXT("multipart/form-data"), EAPIEntryContent::Audio},
-	{ TEXT("audio/ogg"), EAPIEntryContent::AudioOgg},
+	//{ TEXT("audio/ogg"), EAPIEntryContent::AudioOgg},
 	{ TEXT("audio/wav"), EAPIEntryContent::AudioWav},
-	{ TEXT("audio/acc"), EAPIEntryContent::AudioAcc},
+	//{ TEXT("audio/acc"), EAPIEntryContent::AudioAcc},
+	//{ TEXT("audio/mp3"), EAPIEntryContent::AudioMp3},
 	//{ TEXT("multipart/form-data"), EAPIEntryContent::Video},
 	{ TEXT("video/mp4"), EAPIEntryContent::VideoMp4},
 	{ TEXT("video/mov"), EAPIEntryContent::VideoMov},
@@ -225,12 +227,12 @@ const TMap<EAPIImageFormat, EAPIEntryContent> FVActAPI::EntryImageContentMapE = 
 
 bool FVActAPI::_Unsafe_Entry(UAPIInstance* InAPIInstance, UAPIRoute* InRoute, FAPIEntry& InEntry, FName& OutName, FHttpRouteHandle& Handle, UObject* ContextObject)
 {
-	TObjectPtr<UAPIInstance> Instance = InAPIInstance;
+	TWeakObjectPtr<UAPIInstance> Instance = InAPIInstance;
 	if (InEntry.Callback) { InEntry.Callback->ContextObject = ContextObject; }
 	Handle = InRoute->HttpRouter->BindRoute(FHttpPath(InEntry.GetEntryUrl(InAPIInstance->Identity)), EntryModeMapE[InEntry.Mode], FHttpRequestHandler::CreateLambda(
 		[&InEntry, InRoute, Instance](const FHttpServerRequest& Request, const FHttpResultCallback& OnComplete)
 		{
-			if (Instance == nullptr)
+			if (!Instance.IsValid())
 			{
 #if WITH_EDITOR
 				UE_LOG(LogTemp, Warning, TEXT("invalid API Instance object, probably destroyed"));

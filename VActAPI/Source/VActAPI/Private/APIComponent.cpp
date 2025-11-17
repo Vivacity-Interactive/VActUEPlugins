@@ -12,6 +12,12 @@ UAPIComponent::UAPIComponent()
 void UAPIComponent::BeginPlay()
 {
 	Super::BeginPlay();
+	if (!APIInstance)
+	{
+		APIInstance = NewObject<UAPIInstance>(this, APIInstanceClass);
+		if (APIInstance) { APIInstance->PostReinitProperties(); }
+	}
+
 	if (APIInstance)
 	{
 		APIInstance->Init(this);

@@ -4,56 +4,52 @@
 #include "APIRoute.h"
 #include "APIInstance.h"
 #include "Misc/Guid.h"
+#include "VActAPI.h"
 
-//#include "HttpServerModule.h"
+#include "Sound/SoundWave.h"
+
 #include "HttpServerResponse.h"
 #include "HttpServerRequest.h"
 
-#include "Templates/UniquePtr.h"
 #include "CoreMinimal.h"
 #include "APICallback.h"
-#include "APIServerImageUploadPrompt.generated.h"
+#include "APIServerAudioUpload.generated.h"
 
 class UAPICallback;
 class UAPIRoute;
 struct FAPIEntry;
 class UAPIInstance;
+class USoundWave;
 
-UCLASS(Blueprintable, BlueprintType, EditInlineNew)
-class VACTAPI_API UAPIServerImageUploadPrompt : public UAPICallback
+USTRUCT(BlueprintType, Blueprintable)
+struct VACTAPI_API FAPIAudio
+{
+    GENERATED_BODY()
+};
+
+UCLASS()
+class VACTAPI_API UAPIServerAudioUpload : public UAPICallback
 {
     GENERATED_BODY()
 
-    static const FString DefaultPrompt;
-
 public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    uint8 bSecurityIntersect : 1;
+    uint8 bForceAudioFormat : 1;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    uint8 bUseFile : 1;
+    EAPIAudioFormat AudioFormat;
 
-    UPROPERTY(EditAnywhere, meta = (MultiLine = true))
-    FFilePath File;
-
-    UPROPERTY(EditAnywhere, meta = (MultiLine = true))
-    FString Prompt;
-
-    UPROPERTY(EditAnywhere, meta = (MultiLine = true))
-    FString Key;
-
-    UPROPERTY(EditAnywhere, meta = (MultiLine = true))
-    FAPIEntry ActionEntry;
-
-#if WITH_EDITORONLY_DATA
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    TArray<EAPIEntryContent> SelectedSupportedFormats;
-#endif
-    UPROPERTY()
-    TSet<EAPIEntryContent> SupportedFormats;
+    int32 SampleRate;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 NumChannels;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    int32 Bits;
 
 public:
-    UAPIServerImageUploadPrompt();
+    UAPIServerAudioUpload();
 
     virtual bool OnDataIn(
         const FHttpServerRequest& Request,
@@ -74,17 +70,12 @@ public:
 
 public:
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-    bool OnPromptIn(
-        const FString& InPrompt
+    bool OnAudioIn(
+        USoundWave* Audio
     );
 
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-    bool OnPromptOut(
-        FString& InPrompt
+    USoundWave* OnAudioOut(
+        const FString& AssetId
     );
-
-#if WITH_EDITOR
-    virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-#endif
-
 };
