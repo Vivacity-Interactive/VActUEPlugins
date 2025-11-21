@@ -25,7 +25,7 @@ AVRPlayerController::AVRPlayerController()
 #if WITH_EDITORONLY_DATA
 	_DEBUG_Show_Draw_Limits = false;
 	_DEBUG_Line_Width = 0.8f;
-#endif;
+#endif
 }
 
 //void AVRController::InitForNewRPC()
@@ -317,4 +317,4 @@ void AVRPlayerController::_DEBUG_Draw_Limits()
 		DrawDebugLine(GetWorld(), MoveOrigin, MoveOrigin + MoveForward * Line_Length, Cur_Col, false, 0, 0u, _DEBUG_Line_Width);
 	}
 }
-#endif;
+#endif
