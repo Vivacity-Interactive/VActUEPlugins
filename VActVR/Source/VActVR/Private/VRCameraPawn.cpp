@@ -1,9 +1,7 @@
 #include "VRCameraPawn.h"
-/// = FName(TEXT("LeftGrip"))
-// Sets default values
+
 AVRCameraPawn::AVRCameraPawn()
 {
- 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	VROrigin = CreateDefaultSubobject<USceneComponent>(TEXT("VROrigin"));

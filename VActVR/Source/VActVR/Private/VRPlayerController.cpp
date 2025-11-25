@@ -1,5 +1,7 @@
 #include "VRPlayerController.h"
 
+#include "VActVR.h"
+
 #include "Engine/EngineTypes.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -8,6 +10,26 @@
 #include "HAL/IConsoleManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "NavigationSystem.h"
+
+FVRInteractionContextEvent::FVRInteractionContextEvent()
+	: Context(nullptr)
+	, Instigator(nullptr)
+	, Controller(nullptr)
+{
+
+}
+
+FVRInteractionContextEvent::FVRInteractionContextEvent(
+	UPrimitiveComponent* InContext,
+	UMotionControllerComponent* InInstigator,
+	AVRPlayerController* InController
+)
+	: Context(InContext)
+	, Instigator(InInstigator)
+	, Controller(InController)
+{
+
+}
 
 AVRPlayerController::AVRPlayerController()
 {
@@ -19,8 +41,18 @@ AVRPlayerController::AVRPlayerController()
 	bTraceUseNavMesh = true;
 	bMoveValid = false;
 	bTracePathShow = false;
+	bEnableLeftGrab = true;
+	bEnableRightGrab = true;
+	bParentOnInteaction = true;
+	bOnEmptyHandOnly = true;
+	bInteactionTraceComplex = false;
+	bEnableInteractionCallback = false;
+	//bImpulseOnRelease = true;
+	//bEnableTeleport = true;
+	PhysicsTrackFlagName = FName("_VR_IsSimulatingPhysics");
 	SnapTurnDegree = -45.0f;
 	NavMeshCellHeight = 8.0f;
+	InteractionRadius = 10.0f;
 
 #if WITH_EDITORONLY_DATA
 	_DEBUG_Show_Draw_Limits = false;
@@ -71,15 +103,16 @@ void AVRPlayerController::SnapTurn(bool bRight)
 	if (bCamera)
 	{
 		UCineCameraComponent* CineCamera = VRCamera->GetCineCamera();
-		
+
 		float YawDelta = bRight ? FMath::Abs(SnapTurnDegree) : SnapTurnDegree;
 		FQuat DeltaRotation(FRotator(0.0, YawDelta, 0.0));
 		FVector Location = VRCamera->GetActorLocation();
 
+		// TODO: Fix resets orientation bug when snap turning
 		FQuat NewRotation = VRCamera->GetActorQuat() * DeltaRotation;
 		FTransform NewTransform = CineCamera->GetRelativeTransform() * FTransform(NewRotation, Location);
 		FVector NewLocation = (CineCamera->GetComponentLocation() - NewTransform.GetLocation()) + Location;
-		
+
 		VRCamera->AddActorWorldRotation(DeltaRotation);
 		VRCamera->SetActorLocation(NewLocation);
 	}
@@ -128,17 +161,17 @@ void AVRPlayerController::BeginPlay()
 	{
 		UEnhancedInputLocalPlayerSubsystem* Subsystem;
 		UHeadMountedDisplayFunctionLibrary::SetTrackingOrigin(TrackOrigin);
-		
+
 		IConsoleVariable* cSSPRT = IConsoleManager::Get().FindConsoleVariable(TEXT("xr.SecondaryScreenPercentage.HMDRenderTarget"));
-		if(cSSPRT) { cSSPRT->Set(SecondaryScreenPercentage, EConsoleVariableFlags::ECVF_SetByCode); }
+		if (cSSPRT) { cSSPRT->Set(SecondaryScreenPercentage, EConsoleVariableFlags::ECVF_SetByCode); }
 
 		bool bSubSystem = (Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer())) != nullptr;
 		if (bSubSystem)
-		{ 
+		{
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 			Subsystem->AddMappingContext(HandsMappingContext, 0);
 		}
-		
+
 		UXRLoadingScreenFunctionLibrary::HideLoadingScreen();
 	}
 }
@@ -189,6 +222,7 @@ void AVRPlayerController::Move(const FInputActionValue& Value)
 		MoveOrigin = VRCamera->RightAim->GetComponentLocation();
 		MoveForward = VRCamera->RightAim->GetForwardVector();
 
+		// Maybe move this to FVActVR
 		TraceParms = FPredictProjectilePathParams(TraceProjectileRadius, MoveOrigin, TraceLaunchVelocity * MoveForward, 2.0f);
 		TraceParms.bTraceComplex = bTraceComplex;
 		TraceParms.ObjectTypes = TraceObjectTypes;
@@ -199,6 +233,9 @@ void AVRPlayerController::Move(const FInputActionValue& Value)
 		bool bHit = UGameplayStatics::PredictProjectilePath(GetWorld(), TraceParms, TraceResult);
 		if (bTraceUseNavMesh) { bHit = IsValidMoveLocation(TraceResult.HitResult, MoveTarget); }
 
+		bool bTrachePath = TraceResult.PathData.IsEmpty();
+		if (bTrachePath) { TracePathPoints = MoveTemp(TraceResult.PathData); }
+
 		const bool bAttatch = bVRDynamic && bHit;//&& VRDynamicComponent != nullptr && VRDynamicLastComponent.IsValid();
 		const bool bDetatch = bHit && VRDynamicLastComponent != nullptr && VRDynamicLastComponent.IsValid();
 		if (bAttatch)
@@ -206,7 +243,7 @@ void AVRPlayerController::Move(const FInputActionValue& Value)
 			FAttachmentTransformRules Rule = FAttachmentTransformRules::KeepWorldTransform;
 			Rule.bWeldSimulatedBodies = true;
 			bVRDynamicAttached = VRCamera->AttachToComponent(VRDynamicComponent.Get(), Rule);
-			if (bVRDynamicAttached) { VRDynamicLastComponent = VRDynamicComponent;  }
+			if (bVRDynamicAttached) { VRDynamicLastComponent = VRDynamicComponent; }
 		}
 		else if (bDetatch)
 		{
@@ -245,10 +282,10 @@ void AVRPlayerController::MoveStop(const FInputActionValue& Value)
 
 			FVector Location = CineCamera->GetRelativeLocation();
 			Location.Z = 0.0;
-			
+
 			FRotator Rotation = VRCamera->GetActorRotation();
 			Rotation.Roll = Rotation.Yaw = 0.0;
-			
+
 			VRCamera->TeleportTo(MoveTarget - Rotation.RotateVector(Location), Rotation);
 		}
 	}
@@ -270,7 +307,61 @@ void AVRPlayerController::GrabLeft(const FInputActionValue& Value)
 	const bool bCamera = VRCamera != nullptr && VRCamera.IsValid();
 	if (bCamera)
 	{
-		VRCamera->LeftGrip;
+		bool bTryGrab = bEnableLeftGrab 
+			&& (!bOnEmptyHandOnly || !LeftInteractingComponent.IsValid() );
+
+		if (bTryGrab)
+		{
+			FHitResult Hit;
+			FVector Origin = VRCamera->LeftGrip->GetComponentLocation();
+			const bool bHit = FVActVR::TraceSphere(
+				this, Origin, Origin, InteractionRadius,
+				InteractionTraceObjectTypes, Hit,
+				FVActVR::EmptyActorArray, true, bInteactionTraceComplex
+			);
+
+			if (bHit)
+			{
+				if (bEnableInteractionCallback)
+				{
+					bTryGrab &= OnInteraction(
+						Value, 0,
+						FVRInteractionContextEvent(Hit.GetComponent(), VRCamera->LeftGrip, this),
+						EInteractionEvent::OnTriggered
+					);
+
+					if (!bTryGrab) { return; }
+				}
+
+				const bool bUnparent = bParentOnInteaction 
+					&& LeftInteractingComponent.IsValid()
+					&& LeftInteractingComponent->GetAttachParent() == VRCamera->LeftGrip;
+
+				if (bUnparent)
+				{
+					LeftInteractingComponent->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+					LeftInteractingComponent->SetSimulatePhysics(LeftInteractingComponent->ComponentHasTag(PhysicsTrackFlagName));
+				}
+
+				LeftInteractingComponent = nullptr;
+				LeftInteractingComponent = Hit.GetComponent();
+
+				// TODO: this is a fix, but may also lead to physics simulation consuming towards true when inteacted
+				const bool bFlagPhysics = LeftInteractingComponent->IsSimulatingPhysics();
+				if (bFlagPhysics)
+				{
+					LeftInteractingComponent->ComponentTags.AddUnique(PhysicsTrackFlagName);
+				}
+
+				const bool bParent = bParentOnInteaction && LeftInteractingComponent.IsValid();
+				if (bParent)
+				{
+					FAttachmentTransformRules Rule = FAttachmentTransformRules::KeepWorldTransform;
+					Rule.bWeldSimulatedBodies = bWieldSimulatingBodies;
+					LeftInteractingComponent->AttachToComponent(VRCamera->LeftGrip, Rule);
+				}
+			}
+		}
 	}
 }
 
@@ -279,7 +370,30 @@ void AVRPlayerController::GrabLeftStop(const FInputActionValue& Value)
 	const bool bCamera = VRCamera != nullptr && VRCamera.IsValid();
 	if (bCamera)
 	{
-		VRCamera->LeftGrip;
+		bool bTryRelease = bEnableLeftGrab;
+
+		if (bEnableInteractionCallback)
+		{
+			bTryRelease &= OnInteraction(
+				Value, 0,
+				FVRInteractionContextEvent(LeftInteractingComponent.Get(), VRCamera->LeftGrip, this),
+				EInteractionEvent::OnCompleted
+			);
+		}
+
+		if (bTryRelease)
+		{
+			bool bUnparent = bParentOnInteaction
+				&& LeftInteractingComponent.IsValid()
+				&& LeftInteractingComponent->GetAttachParent() == VRCamera->LeftGrip;
+
+			if (bUnparent)
+			{
+				LeftInteractingComponent->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+				LeftInteractingComponent->SetSimulatePhysics(LeftInteractingComponent->ComponentHasTag(PhysicsTrackFlagName));
+			}
+			LeftInteractingComponent = nullptr;
+		}
 	}
 }
 
@@ -288,7 +402,61 @@ void AVRPlayerController::GrabRight(const FInputActionValue& Value)
 	const bool bCamera = VRCamera != nullptr && VRCamera.IsValid();
 	if (bCamera)
 	{
-		VRCamera->RightGrip;
+		bool bTryGrab = bEnableRightGrab
+			&& (!bOnEmptyHandOnly || !RightInteractingComponent.IsValid());
+
+		if (bTryGrab)
+		{
+			FHitResult Hit;
+			FVector Origin = VRCamera->RightGrip->GetComponentLocation();
+			const bool bHit = FVActVR::TraceSphere(
+				this, Origin, Origin, InteractionRadius,
+				InteractionTraceObjectTypes, Hit,
+				FVActVR::EmptyActorArray, true, bInteactionTraceComplex
+			);
+
+			if (bHit)
+			{
+				if (bEnableInteractionCallback)
+				{
+					bTryGrab &= OnInteraction(
+						Value, 1,
+						FVRInteractionContextEvent(Hit.GetComponent(), VRCamera->RightGrip, this),
+						EInteractionEvent::OnTriggered
+					);
+
+					if (!bTryGrab) { return; }
+				}
+
+				const bool bUnparent = bParentOnInteaction 
+					&& RightInteractingComponent.IsValid()
+					&& RightInteractingComponent->GetAttachParent() == VRCamera->RightGrip;
+
+				if (bUnparent)
+				{
+					RightInteractingComponent->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+					RightInteractingComponent->SetSimulatePhysics(RightInteractingComponent->ComponentHasTag(PhysicsTrackFlagName));
+				}
+				
+				RightInteractingComponent = nullptr;
+				RightInteractingComponent = Hit.GetComponent();
+				
+				// TODO: this is a fix, but may also lead to physics simulation consuming towards true when inteacted
+				const bool bFlagPhysics = RightInteractingComponent->IsSimulatingPhysics();				
+				if (bFlagPhysics)
+				{
+					RightInteractingComponent->ComponentTags.AddUnique(PhysicsTrackFlagName);
+				}
+				
+				const bool bParent = bParentOnInteaction && RightInteractingComponent.IsValid();
+				if (bParent)
+				{
+					FAttachmentTransformRules Rule = FAttachmentTransformRules::KeepWorldTransform;
+					Rule.bWeldSimulatedBodies = bWieldSimulatingBodies;
+					RightInteractingComponent->AttachToComponent(VRCamera->RightGrip, Rule);
+				}
+			}
+		}
 	}
 }
 
@@ -297,8 +465,51 @@ void AVRPlayerController::GrabRightStop(const FInputActionValue& Value)
 	const bool bCamera = VRCamera != nullptr && VRCamera.IsValid();
 	if (bCamera)
 	{
-		VRCamera->RightGrip;
+		bool bTryRelease = bEnableRightGrab;
+		
+		if (bEnableInteractionCallback)
+		{
+			bTryRelease &= OnInteraction(
+				Value, 1,
+				FVRInteractionContextEvent(RightInteractingComponent.Get(), VRCamera->RightGrip, this),
+				EInteractionEvent::OnCompleted
+			);
+		}
+
+		if (bTryRelease)
+		{
+			const bool bUnparent = bParentOnInteaction
+				&& RightInteractingComponent.IsValid()
+				&& RightInteractingComponent->GetAttachParent() == VRCamera->RightGrip;
+
+			if (bUnparent)
+			{
+				RightInteractingComponent->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+				RightInteractingComponent->SetSimulatePhysics(RightInteractingComponent->ComponentHasTag(PhysicsTrackFlagName));
+			}
+			RightInteractingComponent = nullptr;
+		}
 	}
+}
+
+FVRInteractionContextEvent AVRPlayerController::GetLeftInteractionContextEvent()
+{
+	return FVRInteractionContextEvent(LeftInteractingComponent.Get(), VRCamera.IsValid() ? VRCamera->LeftGrip : nullptr, this);
+}
+
+FVRInteractionContextEvent AVRPlayerController::GetRightInteractionContextEvent()
+{
+	return FVRInteractionContextEvent(RightInteractingComponent.Get(), VRCamera.IsValid() ? VRCamera->RightGrip : nullptr, this);
+}
+
+bool AVRPlayerController::OnInteraction_Implementation(
+		const FInputActionValue& Value, int32 Id,
+		const FVRInteractionContextEvent& ContextEvent,
+		EInteractionEvent EventMode,
+		float DeltaTime
+	)
+{
+	return true;
 }
 
 #if WITH_EDITORONLY_DATA

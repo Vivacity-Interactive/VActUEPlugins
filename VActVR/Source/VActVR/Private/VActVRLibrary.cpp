@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright Vivacity Interactive, Inc. All Rights Reserved.
 
 #include "VActVRLibrary.h"
 #include "VActVR.h"
