@@ -12,7 +12,7 @@
 
 class UAPIRoute;
 
-UCLASS(Blueprintable, BlueprintType, EditInlineNew)
+UCLASS(Blueprintable, BlueprintType)
 class VACTAPI_API UAPIInstance : public UObject
 {
     GENERATED_BODY()
@@ -58,8 +58,8 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TArray<FAPIUser> DefaultUsers;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced)
-    TArray<TObjectPtr<UAPIRoute>> Routes;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TArray<FAPIRouteEntry> Routes;
 
 public:
     UAPIInstance();

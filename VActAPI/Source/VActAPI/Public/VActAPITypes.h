@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "VActAPITypes.generated.h"
 
+class UAPIRoute;
 class UAPICallback;
 
 UENUM(BlueprintType)
@@ -390,4 +391,16 @@ struct VACTAPI_API FAPIConstMultipartSegment
     TArrayView<const uint8> Headers;
 
     TArrayView<const uint8> Body;
+};
+
+USTRUCT(BlueprintType, Blueprintable)
+struct VACTAPI_API FAPIRouteEntry
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TSubclassOf<UAPIRoute> RouteClass;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TObjectPtr<UAPIRoute> Route;
 };
