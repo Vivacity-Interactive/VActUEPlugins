@@ -21,25 +21,25 @@ class VACTVR_API AVRCameraPawn : public APawn
 
 public:
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	USceneComponent* VROrigin;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	UMotionControllerComponent* LeftGrip;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	UMotionControllerComponent* RightGrip;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	UMotionControllerComponent* LeftAim;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	UMotionControllerComponent* RightAim;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	UCineCameraComponent* CineCamera;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	UVRNotificationsComponent* VRNotifications;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
