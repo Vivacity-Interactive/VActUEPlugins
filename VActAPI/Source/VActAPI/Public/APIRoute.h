@@ -10,7 +10,7 @@
 #include "UObject/NoExportTypes.h"
 #include "APIRoute.generated.h"
 
-UCLASS(Blueprintable, BlueprintType, EditInlineNew)
+UCLASS(Blueprintable, BlueprintType)
 class VACTAPI_API UAPIRoute : public UObject
 {
     GENERATED_BODY()

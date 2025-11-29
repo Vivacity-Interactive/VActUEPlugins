@@ -231,20 +231,17 @@ bool UAPIInstance::Init_Implementation(
 		}
 	}
 
-	for (auto& RouteClass : RouteClasses)
+	for (auto &RouteEntry : Routes)
 	{
-		if (!RouteClass) { continue; }
-		UAPIRoute* Route = NewObject<UAPIRoute>(this, RouteClass);
-		if (Route)
-		{
-			Routes.Add(Route);
+		const bool bValidRoute = RouteEntry.Route
+			|| (RouteEntry.RouteClass
+				&& (RouteEntry.Route = NewObject<UAPIRoute>(this, RouteEntry.RouteClass)) != nullptr);
+
+		if (!bValidRoute)
+		{ 
+			continue;
 		}
-	}
-
-	for (auto &Route : Routes)
-	{
-		if (!Route) { continue; }
-
+		auto& Route = RouteEntry.Route;
 		Route->HttpRouter = HttpModule.GetHttpRouter(Route->Port, true);
 		int32 ServerPortMax = Route->Port + Route->PortMaxOffset;
 		while (!Route->HttpRouter && ++Route->Port <= ServerPortMax)
@@ -306,8 +303,9 @@ bool UAPIInstance::DeInit_Implementation(
 	HttpModule.StopAllListeners();
 	
 
-	for (auto& Route : Routes)
+	for (auto& RouteEntry : Routes)
 	{
+		auto& Route = RouteEntry.Route;
 		const bool bRoute = Route != nullptr && Route->HttpRouter.IsValid();
 		if (bRoute)
 		{
