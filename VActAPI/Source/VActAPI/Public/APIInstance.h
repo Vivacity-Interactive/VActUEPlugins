@@ -58,8 +58,14 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TArray<FAPIUser> DefaultUsers;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Instanced)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TArray<TSubclassOf<UAPIRoute>> RouteClasses;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TArray<TObjectPtr<UAPIRoute>> Routes;
+
+public:
+	static UAPIInstance* Resolve(UObject* ContextObject);
 
 public:
     UAPIInstance();
@@ -72,6 +78,9 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "VAct API")
     static void HashCode(const FString& Code, int64& Hash);
+
+    UFUNCTION(BlueprintCallable, Category = "VAct API")
+	static void UnHashCode(const int64& Hash, FString& Code);
 
     UFUNCTION(BlueprintCallable, Category = "VAct API")
     static void HashSecret(FString& Into, const FString& Secret, const FString& Salt, int32 Iteration = 10000);
@@ -101,6 +110,18 @@ public:
     bool ContainsUser(const FGuid& UserId) const;
 
     FAPIUser* FindUser(const FGuid& UserId);
+
+    UFUNCTION(BlueprintCallable)
+	void GetTokens(TArray<FGuid>& OutTokens) const { Tokens.GetKeys(OutTokens); }
+
+    UFUNCTION(BlueprintCallable)
+    void GetCodes(TArray<int64>& OutCodes) const { Codes.GetKeys(OutCodes); }
+
+    UFUNCTION(BlueprintCallable)
+	void GetUsers(TArray<FGuid>& OutUsers) const { Users.GetKeys(OutUsers); }
+
+    //UFUNCTION(BlueprintCallable)
+    //void GetAccounts(TArray<FSHAHash>& OutAccounts) const { Accounts.GetKeys(OutAccounts); }
 
 public:
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)

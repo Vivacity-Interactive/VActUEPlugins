@@ -55,6 +55,12 @@ void UAPIInstance::HashCode(const FString& Code, int64& Hash)
 	Hash = static_cast<int64>(_Hash);
 }
 
+void UAPIInstance::UnHashCode(const int64& Hash, FString& Code)
+{
+	FUTF8ToTCHAR Converter(reinterpret_cast<const ANSICHAR*>(&Hash), sizeof(uint64));
+	Code = FString(Converter.Length(), Converter.Get());
+}
+
 void UAPIInstance::HashSecret(FString& Into, const FString& Secret, const FString& Salt, int32 Iterations)
 {
 	FTCHARToUTF8 _Secret(*Secret);
@@ -225,12 +231,19 @@ bool UAPIInstance::Init_Implementation(
 		}
 	}
 
+	for (auto& RouteClass : RouteClasses)
+	{
+		if (!RouteClass) { continue; }
+		UAPIRoute* Route = NewObject<UAPIRoute>(this, RouteClass);
+		if (Route)
+		{
+			Routes.Add(Route);
+		}
+	}
+
 	for (auto &Route : Routes)
 	{
-		if (!Route)
-		{ 
-			continue;
-		}
+		if (!Route) { continue; }
 
 		Route->HttpRouter = HttpModule.GetHttpRouter(Route->Port, true);
 		int32 ServerPortMax = Route->Port + Route->PortMaxOffset;

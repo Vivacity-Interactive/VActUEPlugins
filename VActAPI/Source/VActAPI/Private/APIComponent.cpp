@@ -15,7 +15,7 @@ void UAPIComponent::BeginPlay()
 	if (!APIInstance)
 	{
 		APIInstance = NewObject<UAPIInstance>(this, APIInstanceClass);
-		if (APIInstance) { APIInstance->PostReinitProperties(); }
+		if (APIInstance) { APIInstance->PostInitProperties(); }
 	}
 
 	if (APIInstance)

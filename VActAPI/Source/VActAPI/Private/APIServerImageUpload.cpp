@@ -58,7 +58,8 @@ bool UAPIServerImageUpload::OnDataIn(
 			: FVActAPI::_ImageRawFormatMapE[_Image.Format];
 
 		Image = UTexture2D::CreateTransient(_Image.SizeX, _Image.SizeY, _PixelFormat);
-		Image->MipGenSettings = TMGS_NoMipmaps;
+		//Image->MipGenSettings = TMGS_NoMipmaps;
+		//Image->bMi = false;
 		Image->SRGB = true;
 
 		FTexture2DMipMap& Mip = Image->GetPlatformData()->Mips[0];
