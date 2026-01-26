@@ -30,6 +30,12 @@ struct VACTMATH_API FVActMath
 	}
 
 	template<typename T0 = float>
+	FORCEINLINE static T0 ExpSnap(const T0 X, const T0 Step, const T0 Exp)
+	{
+		return RoundTo(FMath::Pow(X, Exp) / Step) * Step;
+	}
+
+	template<typename T0 = float>
 	FORCEINLINE static T0 Mix(const T0 A, const T0 B, const T0 Alpha, const T0 Beta, const T0 Eps = FVActMathConst::Small)
 	{
 		const T0 Norm = Alpha + Beta;
@@ -93,6 +99,42 @@ struct VACTMATH_API FVActMath
 		for (int32 Index = 0; Index < Count; ++Index)
 		{
 			Into[Index] = RoundTo(A[Index]);
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_ExpSnap(T0* Into, const T0* X, const T0* Step, const T0* Exp, const int32 Count)
+	{
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into[Index] = ExpSnap(X[Index], Step[Index], Exp[Index]);
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_ExpSnap(T0* Into, const T0* X, const T0 Step, const T0* Exp, const int32 Count)
+	{
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into[Index] = ExpSnap(X[Index], Step, Exp[Index]);
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_ExpSnap(T0* Into, const T0* X, const T0* Step, const T0 Exp, const int32 Count)
+	{
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into[Index] = ExpSnap(X[Index], Step[Index], Exp);
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_ExpSnap(T0* Into, const T0* X, const T0 Step, const T0 Exp, const int32 Count)
+	{
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into[Index] = ExpSnap(X[Index], Step, Exp);
 		}
 	}
 
@@ -721,6 +763,9 @@ struct VACTMATH_API FVActMath
 		case EMathOperation::Snap:
 			_Unsafe_Snap(A, B, Count);
 			break;
+		case EMathOperation::ExpSnap:
+			_Unsafe_Exp(A, A, B, Count);
+			break;
 		case EMathOperation::Round:
 			_Unsafe_Round(A, B, Count);
 			break;
@@ -820,6 +865,9 @@ struct VACTMATH_API FVActMath
 				break;
 			case EMathOperation::Snap:
 				A[Index] = Snap(A[Index], B[Index]);
+				break;
+			case EMathOperation::ExpSnap:
+				A[Index] = ExpSnap(A[Index], A[Index], B[Index]);
 				break;
 			case EMathOperation::Round:
 				A[Index] = Round(B[Index]);

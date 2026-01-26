@@ -33,6 +33,7 @@ enum class EMathOperation
 	Move,
 	Swap,
 	Snap,
+	ExpSnap,
 	Round
 };
 
