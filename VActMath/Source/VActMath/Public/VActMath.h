@@ -26,13 +26,13 @@ struct VACTMATH_API FVActMath
 	template<typename T0 = float>
 	FORCEINLINE static T0 Snap(const T0 X, const T0 Step)
 	{
-		return RoundTo(X / Step) * Step;
+		return Round(X / Step) * Step;
 	}
 
 	template<typename T0 = float>
 	FORCEINLINE static T0 ExpSnap(const T0 X, const T0 Step, const T0 Exp)
 	{
-		return RoundTo(FMath::Pow(X, Exp) / Step) * Step;
+		return Round(FMath::Pow(X, Exp) / Step) * Step;
 	}
 
 	template<typename T0 = float>
