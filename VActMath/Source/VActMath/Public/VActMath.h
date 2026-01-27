@@ -11,6 +11,12 @@ struct VACTMATH_API FVActMath
 	// Base Functions
 
 	template<typename T0 = float>
+	FORCEINLINE static bool Between(const T0 X, const T0 Min, const T0 Max, const T0 Eps = FVActMathConst::Eps)
+	{
+		return X >= (Min - Eps) && X <= (Max + Eps);
+	}
+
+	template<typename T0 = float>
 	FORCEINLINE static T0 Pry(const T0 X, const T0 Min, const T0 Max)
 	{
 		const T0 Pivot = Min + (Max - Min) * FVActMathConst::Half;
@@ -92,6 +98,24 @@ struct VACTMATH_API FVActMath
 
 
 	// General Enum Functions
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Sign(T0* Into, const T0* A, const int32 Count)
+	{
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into[Index] = FMath::Sign(A[Index]);
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Abs(T0* Into, const T0* A, const int32 Count)
+	{
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into[Index] = FMath::Abs(A[Index]);
+		}
+	}
 
 	template<typename T0 = float>
 	FORCEINLINE static void _Unsafe_Round(T0* Into, const T0* A, const int32 Count)
@@ -769,6 +793,12 @@ struct VACTMATH_API FVActMath
 		case EMathOperation::Round:
 			_Unsafe_Round(A, B, Count);
 			break;
+		case EMathOperation::Sign:
+			_Unsafe_Sign(A, B, Count);
+			break;
+		case EMathOperation::Abs:
+			_Unsafe_Abs(A, B, Count);
+			break;
 		default:
 			break;
 		}
@@ -872,6 +902,12 @@ struct VACTMATH_API FVActMath
 			case EMathOperation::Round:
 				A[Index] = Round(B[Index]);
 				break;
+			case EMathOperation::Sign:
+				A[Index] = FMath::Sign(B[Index]);
+				break;
+			case EMathOperation::Abs:
+				A[Index] = FMath::Abs(B[Index]);
+				break;
 			default:
 				break;
 			}
@@ -880,6 +916,141 @@ struct VACTMATH_API FVActMath
 
 
 	// Other Math Functions
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Approximate(T0* Into, const T0* A, const T0* B, const int32 Count, const int32 K, T0& Score)
+	{
+		const T0 Alpha = FVActMathConst::One<T0> / (K + FVActMathConst::One<T0>);
+		Score = FVActMathConst::Zero;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			const T0 Measure = A[Index];
+			const T0 Base = B[Index];
+			Score += FMath::Abs(Base - Measure);
+			Into[Index] = (Base + K * Measure) * Alpha;
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Approximate(T0* Into, const T0* A, const T0 B, const int32 Count, const int32 K, T0& Score)
+	{
+		const T0 Alpha = FVActMathConst::One<T0> / (K + FVActMathConst::One<T0>);
+		Score = FVActMathConst::Zero;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			const T0 Measure = A[Index];
+			Score += FMath::Abs(B - Measure);
+			Into[Index] = (B + K * Measure) * Alpha;
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Approximate(T0* Into, const T0 A, const T0* B, const int32 Count, const int32 K, T0& Score)
+	{
+		const T0 Alpha = FVActMathConst::One<T0> / (K + FVActMathConst::One<T0>);
+		Score = FVActMathConst::Zero;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			const T0 Base = B[Index];
+			Score += FMath::Abs(Base - A);
+			Into[Index] = (Base + K * A) * Alpha;
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Approximate(T0* Into, const T0* A, const T0* Min, const T0* Max, const int32 Count, const int32 K, T0& Score)
+	{
+		const T0 Alpha = FVActMathConst::One<T0> / (K + FVActMathConst::One<T0>);
+		Score = FVActMathConst::Zero;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			const T0 Measure = A[Index];
+			const T0 Mean = (Max[Index] + Min[Index]) * FVActMathConst::Half;
+			Score += FMath::Min(FMath::Abs(Max[Index] - Measure), FMath::Abs(Min[Index] - Measure));
+			Into[Index] = (Mean + K * Measure) * Alpha;
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Approximate(T0* Into, const T0* A, const T0* Min, const T0 Max, const int32 Count, const int32 K, T0& Score)
+	{
+		const T0 Alpha = FVActMathConst::One<T0> / (K + FVActMathConst::One<T0>);
+		Score = FVActMathConst::Zero;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			const float Measure = A[Index];
+			const float Mean = (Max + Min[Index]) * FVActMathConst::Half;
+			Score += FMath::Min(FMath::Abs(Max - Measure), FMath::Abs(Min[Index] - Measure));
+			Into[Index] = (Mean + K * Measure) * Alpha;
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Approximate(T0* Into, const T0* A, const T0 Min, const T0* Max, const int32 Count, const int32 K, T0& Score)
+	{
+		const T0 Alpha = FVActMathConst::One<T0> / (K + FVActMathConst::One<T0>);
+		Score = FVActMathConst::Zero;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			const T0 Measure = A[Index];
+			const T0 Mean = (Max[Index] + Min) * FVActMathConst::Half;
+			Score += FMath::Min(FMath::Abs(Max[Index] - Measure), FMath::Abs(Min - Measure));
+			Into[Index] = (Mean + K * Measure) * Alpha;
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Approximate(T0* Into, const T0* A, const T0 Min, const T0 Max, const int32 Count, const int32 K, T0& Score)
+	{
+		const T0 Alpha = FVActMathConst::One<T0> / (K + FVActMathConst::One<T0>);
+		Score = FVActMathConst::Zero;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			const T0 Measure = A[Index];
+			const T0 Mean = (Max + Min) * FVActMathConst::Half;
+			Score += FMath::Min(FMath::Abs(Max - Measure), FMath::Abs(Min - Measure));
+			Into[Index] = (Mean + K * Measure) * Alpha;
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Approximate(T0* Into, const T0 A, const T0* Min, const T0* Max, const int32 Count, const int32 K, T0& Score)
+	{
+		const T0 Alpha = FVActMathConst::One<T0> / (K + FVActMathConst::One<T0>);
+		Score = FVActMathConst::Zero;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			const T0 Mean = (Max[Index] + Min[Index]) * FVActMathConst::Half;
+			Score += FMath::Min(FMath::Abs(Max[Index] - A), FMath::Abs(Min[Index] - A));
+			Into[Index] = (Mean + K * A) * Alpha;
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Approximate(T0* Into, const T0 A, const T0* Min, const T0 Max, const int32 Count, const int32 K, T0& Score)
+	{
+		const T0 Alpha = FVActMathConst::One<T0> / (K + FVActMathConst::One<T0>);
+		Score = FVActMathConst::Zero;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			const T0 Mean = (Max + Min[Index]) * FVActMathConst::Half;
+			Score += FMath::Min(FMath::Abs(Max - A), FMath::Abs(Min[Index] - A));
+			Into[Index] = (Mean + K * A) * Alpha;
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Approximate(T0* Into, const T0 A, const T0 Min, const T0* Max, const int32 Count, const int32 K, T0& Score)
+	{
+		const T0 Alpha = FVActMathConst::One<T0> / (K + FVActMathConst::One<T0>);
+		Score = FVActMathConst::Zero;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			const T0 Mean = (Max[Index] + Min) * FVActMathConst::Half;
+			Score += FMath::Min(FMath::Abs(Max[Index] - A), FMath::Abs(Min - A));
+			Into[Index] = (Mean + K * A) * Alpha;
+		}
+	}
 
 	template<typename T0 = float>
 	FORCEINLINE static void _Unsafe_Kernel(T0* Into, const T0* X, const T0* Kernel, const int32 Count, const int32 Window, const int32 Pivot = 0)
@@ -1701,6 +1872,200 @@ struct VACTMATH_API FVActMath
 			Into += A[Index] - Mean;
 		}
 		Into = Into / (Norm + Eps);
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Compare(T0& Into, const T0* A, const T0* B, const int32 Count)
+	{
+		Into = FVActMathConst::Zero;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into += FMath::Abs(B[Index] - A[Index]);
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Compare(T0& Into, const T0* A, const T0 B, const int32 Count)
+	{
+		Into = FVActMathConst::Zero;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into += FMath::Abs(B - A[Index]);
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Compare(T0& Into, const T0 A, const T0* B, const int32 Count)
+	{
+		Into = FVActMathConst::Zero;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into += FMath::Abs(B[Index] - A);
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Compare(T0& Into, const T0* A, const T0* Min, const T0* Max, const int32 Count)
+	{
+		Into = FVActMathConst::Zero;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			const T0 Value = A[Index];
+			Into += FMath::Min(FMath::Abs(Max[Index] - Value), FMath::Abs(Min[Index] - Value));
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Compare(T0& Into, const T0* A, const T0* Min, const T0 Max, const int32 Count)
+	{
+		Into = FVActMathConst::Zero;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			const T0 Value = A[Index];
+			Into += FMath::Min(FMath::Abs(Max - Value), FMath::Abs(Min[Index] - Value));
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Compare(T0& Into, const T0* A, const T0 Min, const T0* Max, const int32 Count)
+	{
+		Into = FVActMathConst::Zero;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			const T0 Value = A[Index];
+			Into += FMath::Min(FMath::Abs(Max[Index] - Value), FMath::Abs(Min - Value));
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Compare(T0& Into, const T0* A, const T0 Min, const T0 Max, const int32 Count)
+	{
+		Into = FVActMathConst::Zero;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			const T0 Value = A[Index];
+			Into += FMath::Min(FMath::Abs(Max - Value), FMath::Abs(Min - Value));
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Compare(T0& Into, const T0 A, const T0* Min, const T0* Max, const int32 Count)
+	{
+		Into = FVActMathConst::Zero;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into += FMath::Min(FMath::Abs(Max[Index] - A), FMath::Abs(Min[Index] - A));
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Compare(T0& Into, const T0 A, const T0* Min, const T0 Max, const int32 Count)
+	{
+		Into = FVActMathConst::Zero;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into += FMath::Min(FMath::Abs(Max - A), FMath::Abs(Min[Index] - A));
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Compare(T0& Into, const T0 A, const T0 Min, const T0* Max, const int32 Count)
+	{
+		Into = FVActMathConst::Zero;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into += FMath::Min(FMath::Abs(Max[Index] - A), FMath::Abs(Min - A));
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Check(bool& Into, const T0* A, const T0* B, const int32 Count, const T0 Eps = FVActMathConst::Eps)
+	{
+		Into = true;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into &= FMath::IsNearlyEqual(A[Index], B[Index], Eps);
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Check(bool& Into, const T0* A, const T0 B, const int32 Count, const T0 Eps = FVActMathConst::Eps)
+	{
+		Into = true;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into &= FMath::IsNearlyEqual(A[Index], B, Eps);
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Check(bool& Into, const T0* A, const T0* Min, const T0* Max, const int32 Count, const T0 Eps = FVActMathConst::Eps)
+	{
+		Into = true;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into &= Between(A[Index], Min[Index], Max[Index], Eps);
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Check(bool& Into, const T0* A, const T0* Min, const T0 Max, const int32 Count, const T0 Eps = FVActMathConst::Eps)
+	{
+		Into = true;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into &= Between(A[Index], Min[Index], Max, Eps);
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Check(bool& Into, const T0* A, const T0 Min, const T0* Max, const int32 Count, const T0 Eps = FVActMathConst::Eps)
+	{
+		Into = true;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into &= Between(A[Index], Min, Max[Index], Eps);
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Check(bool& Into, const T0* A, const T0 Min, const T0 Max, const int32 Count, const T0 Eps = FVActMathConst::Eps)
+	{
+		Into = true;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into &= Between(A[Index], Min, Max, Eps);
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Check(bool& Into, const T0 A, const T0* Min, const T0* Max, const int32 Count, const T0 Eps = FVActMathConst::Eps)
+	{
+		Into = true;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into &= Between(A, Min[Index], Max[Index], Eps);
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Check(bool& Into, const T0 A, const T0* Min, const T0 Max, const int32 Count, const T0 Eps = FVActMathConst::Eps)
+	{
+		Into = true;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into &= Between(A, Min[Index], Max, Eps);
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Check(bool& Into, const T0 A, const T0 Min, const T0* Max, const int32 Count, const T0 Eps = FVActMathConst::Eps)
+	{
+		Into = true;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into &= Between(A, Min, Max[Index], Eps);
+		}
 	}
 
 };

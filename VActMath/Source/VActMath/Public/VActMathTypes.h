@@ -34,7 +34,9 @@ enum class EMathOperation
 	Swap,
 	Snap,
 	ExpSnap,
-	Round
+	Round,
+	Sign,
+	Abs
 };
 
 
