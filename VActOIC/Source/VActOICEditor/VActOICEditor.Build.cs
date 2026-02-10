@@ -44,7 +44,10 @@ public class VActOICEditor : ModuleRules
 				"EditorStyle", 
                 "PropertyEditor", 
 				"DesktopWidgets", 
-                "InputCore"
+                "InputCore",
+                "AssetRegistry",
+                "ContentBrowser",
+				"UnrealEd",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
