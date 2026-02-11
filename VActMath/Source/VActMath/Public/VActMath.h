@@ -918,6 +918,69 @@ struct VACTMATH_API FVActMath
 	// Other Math Functions
 
 	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Between(T0* Into, const T0* X, const T0* Min, const T0* Max, const int32 Count)
+	{
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into[Index] = static_cast<T0>(Between(X[Index], Min[Index], Max[Index]));
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Between(T0* Into, const T0* X, const T0* Min, const T0 Max, const int32 Count)
+	{
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into[Index] = static_cast<T0>(Between(X[Index], Min[Index], Max));
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Between(T0* Into, const T0* X, const T0 Min, const T0* Max, const int32 Count)
+	{
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into[Index] = static_cast<T0>(Between(X[Index], Min, Max[Index]));
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Between(T0* Into, const T0* X, const T0 Min, const T0 Max, const int32 Count)
+	{
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into[Index] = static_cast<T0>(Between(X[Index], Min, Max));
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Between(T0* Into, const T0 X, const T0* Min, const T0* Max, const int32 Count)
+	{
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into[Index] = static_cast<T0>(Between(X, Min[Index], Max[Index]));
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Between(T0* Into, const T0 X, const T0* Min, const T0 Max, const int32 Count)
+	{
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into[Index] = static_cast<T0>(Between(X, Min[Index], Max));
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_Between(T0* Into, const T0 X, const T0 Min, const T0* Max, const int32 Count)
+	{
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into[Index] = static_cast<T0>(Between(X, Min, Max[Index]));
+		}
+	}
+
+	template<typename T0 = float>
 	FORCEINLINE static void _Unsafe_Approx(T0* Into, const T0* A, const T0* B, const int32 Count, const int32 K, T0& Score)
 	{
 		const T0 Alpha = FVActMathConst::One<T0> / (K + FVActMathConst::One<T0>);
@@ -1680,6 +1743,76 @@ struct VACTMATH_API FVActMath
 
 
 	// Analitic Functions
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_AllBetween(bool& Into, const T0* X, const T0* Min, const T0* Max, const int32 Count)
+	{
+		Into = true;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into =& Between(X[Index], Min[Index], Max[Index]);
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_AllBetween(bool& Into, const T0* X, const T0* Min, const T0 Max, const int32 Count)
+	{
+		Into = true;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into &= Between(X[Index], Min[Index], Max);
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_AllBetween(bool& Into, const T0* X, const T0 Min, const T0* Max, const int32 Count)
+	{
+		Into = true;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into &= Between(X[Index], Min, Max[Index]);
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_AllBetween(bool& Into, const T0* X, const T0 Min, const T0 Max, const int32 Count)
+	{
+		Into = true;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into &= Between(X[Index], Min, Max);
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_AllBetween(bool& Into, const T0 X, const T0* Min, const T0* Max, const int32 Count)
+	{
+		Into = true;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into &= Between(X, Min[Index], Max[Index]);
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_AllBetween(bool& Into, const T0 X, const T0* Min, const T0 Max, const int32 Count)
+	{
+		Into = true;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into &= Between(X, Min[Index], Max);
+		}
+	}
+
+	template<typename T0 = float>
+	FORCEINLINE static void _Unsafe_AllBetween(bool& Into, const T0 X, const T0 Min, const T0* Max, const int32 Count)
+	{
+		Into = true;
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Into &= Between(X, Min, Max[Index]);
+		}
+	}
 
 	template<typename T0 = float>
 	FORCEINLINE static void _Unsafe_Dot(T0& Into, const T0* A, const T0* B, const int32 Count)
