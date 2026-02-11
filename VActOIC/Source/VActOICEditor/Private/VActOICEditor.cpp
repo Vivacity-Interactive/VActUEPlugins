@@ -119,8 +119,6 @@ void FVActOICEditor::ExportToOICAsset(const UWorld* World, const FString& Path, 
 			AActor* Actor = *It;
 			if (!Actor) continue;
 
-
-
 			TArray<USceneComponent*> SceneComponents;
 			Actor->GetComponents<USceneComponent>(SceneComponents);
 			TInlineComponentArray<USceneComponent*> Components(Actor);
@@ -131,15 +129,15 @@ void FVActOICEditor::ExportToOICAsset(const UWorld* World, const FString& Path, 
 				{
 					UInstancedStaticMeshComponent* Instance = CastChecked<UInstancedStaticMeshComponent>(Component);
 					UStaticMesh* Object = Instance->GetStaticMesh();
-
-					int32* ObjectId = NameToObjectId.Find(Object->GetFName());
+					FName _Name = FName(Object->GetName() + TEXT("_P"));
+					int32* ObjectId = NameToObjectId.Find(_Name);
 					if (!ObjectId)
 					{
 						FOICObject _Object;
 						_Object.Mesh = Object;
 						_Object.Type = EOICAsset::Particle;
 						_Object.Meta = -1;
-						ObjectId = &NameToObjectId.Add(Object->GetFName(), Profile->Objects.Add(_Object));
+						ObjectId = &NameToObjectId.Add(_Name, Profile->Objects.Add(_Object));
 					}
 
 					const int32 End = Instance->GetInstanceCount();
@@ -151,7 +149,8 @@ void FVActOICEditor::ExportToOICAsset(const UWorld* World, const FString& Path, 
 						_Instance.Parent = *ObjectId;
 						_Instance.Meta = -1;
 						Instance->GetInstanceTransform(Index, _Instance.Transform, true);
-						_Instance.Id = Profile->Instances.Add(_Instance);
+						_Instance.Id = Profile->Instances.Num();
+						Profile->Instances.Add(_Instance);
 					}
 				}
 				else if (Component->IsA<UStaticMeshComponent>())
@@ -174,7 +173,8 @@ void FVActOICEditor::ExportToOICAsset(const UWorld* World, const FString& Path, 
 					_Instance.Parent = -1; // TODO needs fix
 					_Instance.Meta = -1;
 					_Instance.Transform = Instance->GetComponentTransform();
-					_Instance.Id = Profile->Instances.Add(_Instance);
+					_Instance.Id = Profile->Instances.Num();
+					Profile->Instances.Add(_Instance);
 				}
 				/*else if (Component->IsA<USkinnedMeshComponent>())
 				{

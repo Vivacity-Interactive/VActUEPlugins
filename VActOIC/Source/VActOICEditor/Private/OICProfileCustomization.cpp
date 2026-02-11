@@ -33,7 +33,7 @@ const TArray<FName> FOICProfileCustomization::PropertyNames = {
 	FName(TEXT("Metas")),
 	FName(TEXT("Meta")),
 	FName(TEXT("Type")),
-	//FName(TEXT("Shape")),
+	FName(TEXT("Shape")),
 	FName(TEXT("Value")),
 	FName(TEXT("Axis")),
 	FName(TEXT("Version")),
@@ -52,7 +52,7 @@ enum class _EPropName
 	Metas,
 	Meta,
 	Type,
-	//Shape,
+	Shape,
 	Value,
 	Axis,
 	Version,
@@ -262,115 +262,135 @@ bool FOICProfileCustomization::ParseFromCursorsJson(class UOICProfile* InContext
 	return true;
 }
 
-bool FOICProfileCustomization::ComposeToCursorsCompact(class UOICProfile* InContext, FVActComposeRoot& Root)
+bool FOICProfileCustomization::EmitToCursorsBinary(class UOICProfile* InContext, FVActEmitRoot& Root)
 {
-	FVActComposeUtils::ComposeStructOpen(Root.Cursors);
-
-	FVActComposeUtils::Compose(InContext->Type, Root.Cursors);
-	FVActComposeUtils::Compose(InContext->Version, Root.Cursors);
-	FVActComposeUtils::Compose(InContext->Axis, Root.Cursors);
-#if WITH_EDITORONLY_DATA
-	FVActComposeUtils::Compose(InContext->Notes, Root.Cursors);
-	FVActComposeUtils::Compose(InContext->Title, Root.Cursors);
-#endif
-	FVActComposeUtils::Compose(InContext->Name, Root.Cursors);
-
-	// Property Array Objects
-	FVActComposeUtils::ComposeArrayOpen(Root.Cursors);
-	for (const FOICObject& Object : InContext->Objects)
-	{
-		FVActComposeUtils::ComposeStructOpen(Root.Cursors);
-		FVActComposeUtils::ComposeEnum(Object.Type, Root.Cursors, FOICObject::AssetTypes);
-		//FVActComposeUtils::ComposeEnum(Object.Shape, Root.Cursors, FOICObject::ShapeTypes);
-		switch (Object.Type)
-		{
-		case EOICAsset::Actor: FVActComposeUtils::Compose(Object.Actor->GetPathName(), Root.Cursors); break;
-		case EOICAsset::Collider:
-		case EOICAsset::Particle:
-		case EOICAsset::Mesh: FVActComposeUtils::Compose(Object.Mesh->GetPathName(), Root.Cursors); break;
-		case EOICAsset::System:
-		case EOICAsset::Data: FVActComposeUtils::Compose(Object.Data->GetPathName(), Root.Cursors); break;
-		case EOICAsset::Audio: FVActComposeUtils::Compose(Object.Audio->GetPathName(), Root.Cursors); break;
-		default: /*FVActComposeUtils::Compose(TEXT(""), Root.Cursors);*/ break;
-		}
-		FVActComposeUtils::Compose(Object.Meta, Root.Cursors);
-		FVActComposeUtils::ComposeStruct(Root.Cursors);
-	}
-	FVActComposeUtils::ComposeArray(Root.Cursors);
-
-	// Property Array Instances
-	FVActComposeUtils::ComposeArrayOpen(Root.Cursors);
-	for (const FOICInstance& Instance : InContext->Instances)
-	{
-		FVActComposeUtils::ComposeTupleOpen(Root.Cursors);
-		FVActComposeUtils::Compose(Instance.Id, Root.Cursors);
-		FVActComposeUtils::Compose(Instance.Object, Root.Cursors);
-		FVActComposeUtils::Compose(Instance.Parent, Root.Cursors);
-		FVActComposeUtils::Compose(Instance.Meta, Root.Cursors);
-		FVActComposeUtils::Compose(Instance.Transform, Root.Cursors);
-		FVActComposeUtils::ComposeTuple(Root.Cursors);
-	}
-	FVActComposeUtils::ComposeArray(Root.Cursors);
-	
-	// Property Array Metas
-	FVActComposeUtils::ComposeArrayOpen(Root.Cursors);
-	for (const FOICMeta& Meta : InContext->Metas)
-	{
-		FVActComposeUtils::ComposeArrayOpen(Root.Cursors);
-		for (const FOICMetaEntry& Entry : Meta.Entries)
-		{
-			FVActComposeUtils::ComposeStructOpen(Root.Cursors);
-			FVActComposeUtils::Compose(Entry.Asset->GetPathName(), Root.Cursors);
-			FVActComposeUtils::ComposeStructOpen(Root.Cursors);
-			for (const TPair<FName, FOICValue>& Pair : Entry.Properties)
-			{
-				FVActComposeUtils::Compose(Pair.Key, Root.Cursors);
-				FVActComposeUtils::ComposeStructOpen(Root.Cursors);
-				FVActComposeUtils::ComposeEnum(Pair.Value.Type, Root.Cursors, FOICValue::ValueTypes);
-				switch (Pair.Value.Type)
-				{
-				case EOICValue::Name: FVActComposeUtils::Compose(Pair.Value.GetValue<FName>(), Root.Cursors); break;
-				case EOICValue::String: FVActComposeUtils::Compose(Pair.Value.GetValue<FString>(), Root.Cursors); break;
-				case EOICValue::Bool: FVActComposeUtils::Compose(Pair.Value.GetValue<bool>(), Root.Cursors); break;
-				case EOICValue::Float: FVActComposeUtils::Compose(Pair.Value.GetValue<float>(), Root.Cursors); break;
-				case EOICValue::Float2: FVActComposeUtils::ComposeTuple(Pair.Value._FData, Root.Cursors, 2); break;
-				case EOICValue::Float3: FVActComposeUtils::ComposeTuple(Pair.Value._FData, Root.Cursors, 3); break;
-				case EOICValue::Float4: FVActComposeUtils::ComposeTuple(Pair.Value._FData, Root.Cursors, 4); break;
-				case EOICValue::Float5: FVActComposeUtils::ComposeTuple(Pair.Value._FData, Root.Cursors, 5); break;
-				case EOICValue::Float6: FVActComposeUtils::ComposeTuple(Pair.Value._FData, Root.Cursors, 6); break;
-				case EOICValue::Floats: FVActComposeUtils::ComposeTuple(Pair.Value.GetValue<TArray<float>>(), Root.Cursors); break;
-				case EOICValue::Int: FVActComposeUtils::Compose(Pair.Value.GetValue<int32>(), Root.Cursors); break;
-				case EOICValue::Int2: FVActComposeUtils::ComposeTuple(Pair.Value._IData, Root.Cursors, 2); break;
-				case EOICValue::Int3: FVActComposeUtils::ComposeTuple(Pair.Value._IData, Root.Cursors, 3); break;
-				case EOICValue::Int4: FVActComposeUtils::ComposeTuple(Pair.Value._IData, Root.Cursors, 4); break;
-				case EOICValue::Int5: FVActComposeUtils::ComposeTuple(Pair.Value._IData, Root.Cursors, 5); break;
-				case EOICValue::Int6: FVActComposeUtils::ComposeTuple(Pair.Value._IData, Root.Cursors, 6); break;
-				case EOICValue::Ints: FVActComposeUtils::ComposeTuple(Pair.Value.GetValue<TArray<int32>>(), Root.Cursors); break;
-				case EOICValue::Names: FVActComposeUtils::ComposeTuple(Pair.Value.GetValue<TArray<FName>>(), Root.Cursors); break;
-				case EOICValue::Strings: FVActComposeUtils::ComposeTuple(Pair.Value.GetValue<TArray<FString>>(), Root.Cursors); break;
-				case EOICValue::Asset: 
-					FVActComposeUtils::ComposeEnum(Pair.Value._Type, Root.Cursors, FOICObject::AssetTypes);
-					FVActComposeUtils::Compose(Pair.Value.GetValue<FString>(), Root.Cursors);
-					break;
-				default:/*FVActComposeUtils::ComposeNull(Root.Cursors);*/ break;
-				}
-				FVActComposeUtils::ComposeStruct(Root.Cursors);
-				//FVActComposeUtils::ComposeProperty(Root.Cursors);
-			}
-			FVActComposeUtils::ComposeStruct(Root.Cursors);
-			FVActComposeUtils::ComposeStruct(Root.Cursors);
-		}
-		FVActComposeUtils::ComposeArray(Root.Cursors);
-	}
-	FVActComposeUtils::ComposeArray(Root.Cursors);
-
-	FVActComposeUtils::ComposeStruct(Root.Cursors);
-
 	return true;
 }
 
-bool FOICProfileCustomization::ComposeToCursors(class UOICProfile* InContext, FVActComposeRoot& Root)
+bool FOICProfileCustomization::EmitToCursorsCompact(class UOICProfile* InContext, FVActEmitRoot& Root)
 {
+	return true;
+}
+
+bool FOICProfileCustomization::EmitToCursorsJson(class UOICProfile* InContext, FVActEmitRoot& Root)
+{
+	return true;
+}
+
+bool FOICProfileCustomization::EmitToCursorsJsonStrict(class UOICProfile* InContext, FVActEmitRoot& Root)
+{
+	const TCHAR* OICBegin = Root.End();
+	FVActTextEmitUtils::EmitStructOpen(Root.Cursors, Root.Source);
+	
+	FVActTextEmitUtils::EmitProperty(PropertyNames[(int32)_EPropName::Type], InContext->Type, Root.Cursors, Root.Source);
+	FVActTextEmitUtils::EmitDelimiter(Root.Cursors, Root.Source);
+	
+	FVActTextEmitUtils::EmitProperty(PropertyNames[(int32)_EPropName::Version], InContext->Version, Root.Cursors, Root.Source);
+	FVActTextEmitUtils::EmitDelimiter(Root.Cursors, Root.Source);
+	
+	FVActTextEmitUtils::EmitProperty(PropertyNames[(int32)_EPropName::Axis], InContext->Axis, Root.Cursors, Root.Source);
+	FVActTextEmitUtils::EmitDelimiter(Root.Cursors, Root.Source);
+#if WITH_EDITORONLY_DATA
+	FVActTextEmitUtils::EmitProperty(PropertyNames[(int32)_EPropName::Notes], InContext->Notes, Root.Cursors, Root.Source);
+	FVActTextEmitUtils::EmitDelimiter(Root.Cursors, Root.Source);
+	
+	FVActTextEmitUtils::EmitProperty(PropertyNames[(int32)_EPropName::Title], InContext->Title, Root.Cursors, Root.Source);
+	FVActTextEmitUtils::EmitDelimiter(Root.Cursors, Root.Source);
+#endif
+	FVActTextEmitUtils::EmitProperty(PropertyNames[(int32)_EPropName::Name], InContext->Name, Root.Cursors, Root.Source);
+	FVActTextEmitUtils::EmitDelimiter(Root.Cursors, Root.Source);
+
+	// Property Array Objects
+	const TCHAR* ObjectsPropBegin = Root.End();
+	FVActTextEmitUtils::EmitPropertyOpen(PropertyNames[(int32)_EPropName::Objects], Root.Cursors, Root.Source);
+	const TCHAR* ObjectsBegin = Root.End();
+	FVActTextEmitUtils::EmitArrayOpen(Root.Cursors, Root.Source);
+	const int32 ObjectCount = InContext->Objects.Num();
+	for (int32 Index = 0; Index < ObjectCount; ++Index)
+	{
+		const FOICObject& Object = InContext->Objects[Index];
+		const TCHAR* ObjectBegin = Root.End();
+		FVActTextEmitUtils::EmitStructOpen(Root.Cursors, Root.Source);
+		
+		FVActTextEmitUtils::EmitEnumProperty(PropertyNames[(int32)_EPropName::Type], Object.Type, Root.Cursors, Root.Source, FOICObject::AssetTypes);
+		FVActTextEmitUtils::EmitDelimiter(Root.Cursors, Root.Source);
+		
+		//FVActTextEmitUtils::EmitEnumProperty(PropertyNames[(int32)_EPropName::Shape], Object.Shape, Root.Cursors, Root.Source, FOICObject::ShapeTypes);
+		//FVActTextEmitUtils::EmitDelimiter(Root.Cursors, Root.Source);
+		
+		FName _TypeKey = PropertyNames[(int32)_EPropName::Asset];
+		switch (Object.Type)
+		{
+		case EOICAsset::Actor: FVActTextEmitUtils::EmitProperty(_TypeKey, Object.Actor->GetPathName(), Root.Cursors, Root.Source); break;
+		case EOICAsset::Collider:
+		case EOICAsset::Particle:
+		case EOICAsset::Mesh: FVActTextEmitUtils::EmitProperty(_TypeKey, Object.Mesh->GetPathName(), Root.Cursors, Root.Source); break;
+		case EOICAsset::System:
+		case EOICAsset::Data: FVActTextEmitUtils::EmitProperty(_TypeKey, Object.Data->GetPathName(), Root.Cursors, Root.Source); break;
+		case EOICAsset::Audio: FVActTextEmitUtils::EmitProperty(_TypeKey, Object.Audio->GetPathName(), Root.Cursors, Root.Source); break;
+		default: /*FVActComposeUtils::Emit(TEXT(""), Root.Cursors, Root.Source);*/ break;
+		}
+		FVActTextEmitUtils::EmitDelimiter(Root.Cursors, Root.Source);
+		
+		FVActTextEmitUtils::EmitProperty(PropertyNames[(int32)_EPropName::Meta], Object.Meta, Root.Cursors, Root.Source);
+		
+		FVActTextEmitUtils::EmitStruct(Root.Cursors, Root.Source, ObjectBegin);
+		if (Index < ObjectCount - 1) { FVActTextEmitUtils::EmitDelimiter(Root.Cursors, Root.Source); }
+	}
+	FVActTextEmitUtils::EmitArray(Root.Cursors, Root.Source, ObjectsBegin);
+	FVActTextEmitUtils::EmitProperty(Root.Cursors, Root.Source, ObjectsPropBegin);
+	FVActTextEmitUtils::EmitDelimiter(Root.Cursors, Root.Source);
+
+	// Property Array Instances
+	const TCHAR* InstancesPropBegin = Root.End();
+	FVActTextEmitUtils::EmitPropertyOpen(PropertyNames[(int32)_EPropName::Instances], Root.Cursors, Root.Source);
+	const TCHAR* InstancesBegin = Root.End();
+	FVActTextEmitUtils::EmitArrayOpen(Root.Cursors, Root.Source);
+	const int32 InstanceCount = InContext->Instances.Num();
+	for (int32 Index = 0; Index < InstanceCount; ++Index)
+	{
+		const FOICInstance& Instance = InContext->Instances[Index];
+		const TCHAR* InstanceBegin = Root.End();
+		FVActTextEmitUtils::EmitTupleOpen(Root.Cursors, Root.Source); 
+		
+		FVActTextEmitUtils::Emit(Instance.Id, Root.Cursors, Root.Source);
+		FVActTextEmitUtils::EmitDelimiter(Root.Cursors, Root.Source);
+		
+		FVActTextEmitUtils::Emit(Instance.Object, Root.Cursors, Root.Source);
+		FVActTextEmitUtils::EmitDelimiter(Root.Cursors, Root.Source);
+		
+		FVActTextEmitUtils::Emit(Instance.Parent, Root.Cursors, Root.Source);
+		FVActTextEmitUtils::EmitDelimiter(Root.Cursors, Root.Source);
+		
+		FVActTextEmitUtils::Emit(Instance.Meta, Root.Cursors, Root.Source);
+		FVActTextEmitUtils::EmitDelimiter(Root.Cursors, Root.Source);
+
+		FVActTextEmitUtils::Emit(Instance.Transform, Root.Cursors, Root.Source);
+		
+		FVActTextEmitUtils::EmitTuple(Root.Cursors, Root.Source, InstanceBegin);
+		if (Index < InstanceCount - 1) { FVActTextEmitUtils::EmitDelimiter(Root.Cursors, Root.Source); }
+	}
+	FVActTextEmitUtils::EmitArray(Root.Cursors, Root.Source, InstancesBegin);
+	FVActTextEmitUtils::EmitProperty(Root.Cursors, Root.Source, InstancesPropBegin);
+	FVActTextEmitUtils::EmitDelimiter(Root.Cursors, Root.Source);
+
+	// Property Array Metas
+	const TCHAR* MetasPropBegin = Root.End();
+	FVActTextEmitUtils::EmitPropertyOpen(PropertyNames[(int32)_EPropName::Metas], Root.Cursors, Root.Source);
+	const TCHAR* MetasBegin = Root.End();
+	FVActTextEmitUtils::EmitArrayOpen(Root.Cursors, Root.Source);
+	const int32 MetaCount = 0;//InContext->Objects.Num();
+	for (int32 Index = 0; Index < MetaCount; ++Index)
+	{
+		const FOICMeta& Meta = InContext->Metas[Index];
+		//  TODO Needs Meta Pass
+		if (Index < MetaCount - 1) { FVActTextEmitUtils::EmitDelimiter(Root.Cursors, Root.Source); }
+	}
+	FVActTextEmitUtils::EmitArray(Root.Cursors, Root.Source, MetasBegin);
+	FVActTextEmitUtils::EmitProperty(Root.Cursors, Root.Source, MetasPropBegin);
+
+	FVActTextEmitUtils::EmitStruct(Root.Cursors, Root.Source, OICBegin);
+
 	return true;
 }
 

@@ -2,27 +2,6 @@
 
 #include "HAL//PlatformFileManager.h"
 
-const TCHAR FVActFileJson::TOKEN_STRUCT_OPEN = '{';
-
-const TCHAR FVActFileJson::TOKEN_STRUCT_CLOSE = '}';
-
-const TCHAR FVActFileJson::TOKEN_ARRAY_OPEN = '[';
-
-const TCHAR FVActFileJson::TOKEN_ARRAY_CLOSE = ']';
-
-const TCHAR FVActFileJson::TOKEN_TUPLE_OPEN = '(';
-
-const TCHAR FVActFileJson::TOKEN_TUPLE_CLOSE = ')';
-
-const TCHAR FVActFileJson::TOKEN_TAG_OPEN = '<';
-
-const TCHAR FVActFileJson::TOKEN_TAG_CLOSE = '>';
-
-const TCHAR FVActFileJson::TOKEN_DILIM = ',';
-
-const TCHAR FVActFileJson::TOKEN_PROP = ':';
-
-
 bool FVActFileJson::Load(FVActParseRoot& Root, const TCHAR* Path)
 {
 	FVActParseCursor Cursor;
@@ -34,18 +13,14 @@ bool FVActFileJson::Load(FVActParseRoot& Root, const TCHAR* Path)
 	return bValid;
 }
 
-bool FVActFileJson::Save(const FVActComposeRoot& Root, const TCHAR* Path)
+bool FVActFileJson::Save(FVActEmitRoot& Root, const TCHAR* Path)
 {
-	for (const FVActComposeCursor& Cursor : Root.Cursors)
-	{
-#if WITH_EDITORONLY_DATA
-		const bool _b_Index = _DEBUG_VActParseInfo::TokenNames.IsValidIndex((int32)Cursor.Token);
-		UE_LOG(LogTemp, Log, TEXT("%7s(%d)"), (_b_Index ? *_DEBUG_VActParseInfo::TokenNames[(int32)Cursor.Token] : TEXT("")), (int32)Cursor.Token);
-#endif
-	}
-
-	return false;
+	const bool bValid = FFileHelper::SaveStringToFile(Root.View(), Path);
+	return bValid;
 }
+
+
+// Tokens
 
 bool FVActFileJson::TokenRoot(FVActParseCursor& Cursor, TArray<FVActParseCursor>& Cursors)
 {
