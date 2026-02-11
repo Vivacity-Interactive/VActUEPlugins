@@ -46,7 +46,7 @@ void FVActFilesEditor::ExportStaticMeshes(TArray<FAssetData>& Assets, const FStr
 		if (Asset)
 		{
 			FString AssetName = Asset->GetName();
-			FString Filename = FPaths::Combine(Path, AssetName + Ext);  ;
+			FString Filename = FPaths::Combine(Path, AssetName + Ext);
 
 			UAssetExportTask* ExportTask = NewObject<UAssetExportTask>();
 			ExportTask->Object = Asset;

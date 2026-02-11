@@ -18,6 +18,7 @@ const TMap<TSharedPtr<FString>, EVActFileFormat> FVActFileUtils::MapFormat = {
 const TArray<FString> _DEBUG_VActParseInfo::TokenNames = {
 	FString(TEXT("None")),
 	FString(TEXT("Prop")),
+	FString(TEXT("Attr")),
 	FString(TEXT("Join")),
 	FString(TEXT("Name")),
 	FString(TEXT("String")),
@@ -66,6 +67,7 @@ const FString FVActTextTokenUtils::TOKEN_NAME_RANGES = TEXT("__azAZ09");
 
 const FString FVActTextTokenUtils::TOKEN_HEXA_RANGES = TEXT("afAF09");
 
+
 const TCHAR FVActTextTokenUtils::TOKEN_STRING = '"';
 
 const TCHAR FVActTextTokenUtils::TOKEN_CHAR = '\'';
@@ -79,6 +81,29 @@ const TCHAR FVActTextTokenUtils::TOKEN_REF = '@';
 const TCHAR FVActTextTokenUtils::TOKEN_ESC = '\\';
 
 const TCHAR FVActTextTokenUtils::TOKEN_SCI = 'e';
+
+
+const TCHAR FVActTextTokenUtils::TOKEN_STRUCT_OPEN = '{';
+
+const TCHAR FVActTextTokenUtils::TOKEN_STRUCT_CLOSE = '}';
+
+const TCHAR FVActTextTokenUtils::TOKEN_ARRAY_OPEN = '[';
+
+const TCHAR FVActTextTokenUtils::TOKEN_ARRAY_CLOSE = ']';
+
+const TCHAR FVActTextTokenUtils::TOKEN_TUPLE_OPEN = '(';
+
+const TCHAR FVActTextTokenUtils::TOKEN_TUPLE_CLOSE = ')';
+
+const TCHAR FVActTextTokenUtils::TOKEN_TAG_OPEN = '<';
+
+const TCHAR FVActTextTokenUtils::TOKEN_TAG_CLOSE = '>';
+
+const TCHAR FVActTextTokenUtils::TOKEN_DILIM = ',';
+
+const TCHAR FVActTextTokenUtils::TOKEN_PROP = ':';
+
+const TCHAR FVActTextTokenUtils::TOKEN_ATTR = '=';
 
 
 bool FVActTextTokenUtils::TokenValue(FVActParseCursor& Cursor, TArray<FVActParseCursor>& Cursors)

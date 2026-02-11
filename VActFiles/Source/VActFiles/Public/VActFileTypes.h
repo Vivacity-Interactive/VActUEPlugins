@@ -1,11 +1,13 @@
 #pragma once
 
 #include "VActFileEntryTypes.h"
+#include "Misc/StringBuilder.h"
 
 enum class EVActParseToken
 {
 	None = 0,
 	Prop,
+	Attr,
 	Join,
 	Name,
 	String,
@@ -30,32 +32,6 @@ enum class EVActParseToken
 	_Tuple,
 	_Record,
 	_Tag
-};
-
-struct VACTFILES_API FVActComposeCursor
-{
-	EVActParseToken Token;
-	SIZE_T Size;
-	const void* Data;
-
-	FVActComposeCursor(EVActParseToken InToken, const void* InData, SIZE_T InSize)
-	{
-		Token = InToken;
-		Data = nullptr;
-		Size = 0;
-	}
-
-	FVActComposeCursor(EVActParseToken InToken = EVActParseToken::None) : FVActComposeCursor(InToken, nullptr, 0)
-	{
-
-	}
-
-	FORCEINLINE FVActComposeCursor& Init(const void* InData, SIZE_T InSize)
-	{
-		Data = InData;
-		Size = InSize;
-		return *this;
-	}
 };
 
 struct VACTFILES_API FVActParseCursor
@@ -85,6 +61,29 @@ struct VACTFILES_API FVActParseCursor
 	{
 		Set(InCursor);
 		Token = InToken;
+	}
+
+	FVActParseCursor(EVActParseToken InToken, const TCHAR* InFrom)
+	{
+		Token = InToken;
+		_End = To = From = InFrom;
+		Id = -1;
+	}
+
+	FVActParseCursor(EVActParseToken InToken, const TCHAR* InFrom, const TCHAR* InEnd)
+	{
+		Token = InToken;
+		From = InFrom;
+		_End = To = InEnd;
+		Id = -1;
+	}
+
+	FVActParseCursor(EVActParseToken InToken, const TCHAR* InFrom, int32 Length)
+	{
+		Token = InToken;
+		From = InFrom;
+		_End = To = InFrom + Length;
+		Id = -1;
 	}
 
 	FVActParseCursor& Set(const FVActParseCursor& Cursor)
@@ -185,6 +184,48 @@ struct VACTFILES_API FVActParseRoot
 	{
 		Format = InFormat;
 	}
+
+	FORCEINLINE FStringView View()
+	{
+		return Cursors.Last().View();
+	};
+
+	FORCEINLINE const FStringView View() const
+	{
+		return Cursors.Last().View();
+	};
+
+	FORCEINLINE const TCHAR* End() const
+	{
+		return *Source + Source.Len();
+	};
+};
+
+struct VACTFILES_API FVActEmitRoot
+{
+	EVActFileFormat Format;
+	TArray<FVActParseCursor> Cursors;
+	TStringBuilderBase<TCHAR> Source;
+
+	FVActEmitRoot(EVActFileFormat InFormat = EVActFileFormat::None)
+	{
+		Format = InFormat;
+	}
+
+	FORCEINLINE FStringView View()
+	{
+		return Source.ToView();
+	};
+
+	FORCEINLINE const FStringView View() const
+	{
+		return Source.ToView();
+	};
+
+	FORCEINLINE const TCHAR* End() const
+	{
+		return Source.GetData() + Source.Len();
+	};
 };
 
 struct VACTFILES_API FVActParseRootIt
@@ -228,9 +269,4 @@ struct VACTFILES_API FVActParseRootIt
 	{
 		return Root.Cursors.IsValidIndex(Index);
 	};
-};
-
-struct VACTFILES_API FVActComposeRoot
-{
-	TArray<FVActComposeCursor> Cursors;
 };

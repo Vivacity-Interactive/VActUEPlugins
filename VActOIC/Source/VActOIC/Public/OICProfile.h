@@ -115,7 +115,7 @@ struct VACTOIC_API FOICProfileEntry
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<UOICProfile> Class;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UOICProfile> Object;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

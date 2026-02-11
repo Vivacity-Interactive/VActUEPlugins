@@ -49,7 +49,7 @@ public:
 		IDetailCategoryBuilder& Category = DetailBuilder.EditCategory(TypeDetailCustomization::EditCategory);
 
 		const FText LoadButton = LOCTEXT("LoadButtonRow", "Load From File");
-		const FText CheckBox = LOCTEXT("LoadPropRow", "Strict Read");
+		const FText CheckBox = LOCTEXT("LoadPropRow", "Strict Read/Write");
 		Category.AddCustomRow(LoadButton)
 		.NameContent()
 		[
@@ -149,21 +149,23 @@ public:
 		}
 	}
 
-	static void SaveToFile(T* InContext, const TCHAR* FilePath, EVActFileFormat Format)
+	static void SaveToFile(T* InContext, const TCHAR* FilePath, EVActFileFormat Format, bool bStrict = true)
 	{
 		bool bSuccess = false;
-		FVActComposeRoot Root;
+		FVActEmitRoot Root(Format);
 
 		switch (Format)
 		{
-		case EVActFileFormat::Json: bSuccess = TypeDetailCustomization::ComposeToCursors(InContext, Root)
+		case EVActFileFormat::Json: bSuccess = true
+			&& (bStrict
+				? TypeDetailCustomization::EmitToCursorsJsonStrict(InContext, Root)
+				: TypeDetailCustomization::EmitToCursorsJson(InContext, Root))
 			&& FVActFileJson::Save(Root, FilePath); break;
-		case EVActFileFormat::Compact: bSuccess = TypeDetailCustomization::ComposeToCursorsCompact(InContext, Root)
+		case EVActFileFormat::Compact: bSuccess = TypeDetailCustomization::EmitToCursorsCompact(InContext, Root)
 			&& FVActFileCompact::Save(Root, FilePath); break;
-		case EVActFileFormat::Binary: bSuccess = TypeDetailCustomization::ComposeToCursorsCompact(InContext, Root)
+		case EVActFileFormat::Binary: bSuccess = TypeDetailCustomization::EmitToCursorsBinary(InContext, Root)
 			&& FVActFileBinary::Save(Root, FilePath); break;
 		}
-
 	}
 
 	FReply OnClickLoad()
@@ -196,7 +198,7 @@ public:
 		const bool bValid = Context.IsValid() && !ToFilePath.IsEmpty();
 		if (bValid)
 		{
-			SaveToFile(Context.Get(), *ToFilePath, ToFormat);
+			SaveToFile(Context.Get(), *ToFilePath, ToFormat, bStrict);
 		}
 		return FReply::Handled();
 	}
