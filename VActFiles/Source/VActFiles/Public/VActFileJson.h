@@ -6,31 +6,12 @@
 struct VACTFILES_API FVActFileJson
 	: public FVActTextTokenUtils
 {
-	static const TCHAR TOKEN_STRUCT_OPEN;
-
-	static const TCHAR TOKEN_STRUCT_CLOSE;
-
-	static const TCHAR TOKEN_ARRAY_OPEN;
-
-	static const TCHAR TOKEN_ARRAY_CLOSE;
-
-	static const TCHAR TOKEN_TUPLE_OPEN;
-
-	static const TCHAR TOKEN_TUPLE_CLOSE;
-
-	static const TCHAR TOKEN_TAG_OPEN;
-
-	static const TCHAR TOKEN_TAG_CLOSE;
-
-	static const TCHAR TOKEN_DILIM;
-
-	static const TCHAR TOKEN_PROP;
-
-
 	static bool Load(FVActParseRoot& Root, const TCHAR* Path);
 
-	static bool Save(const FVActComposeRoot& Root, const TCHAR* Path);
+	static bool Save(FVActEmitRoot& Root, const TCHAR* Path);
 
+
+	// Tokens
 
 	static bool TokenRoot(FVActParseCursor& Cursor, TArray<FVActParseCursor>& Cursors);
 

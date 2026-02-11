@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Misc/StringBuilder.h"
 #include "UObject/NameTypes.h"
 #include "VActFileTypes.h"
 
@@ -298,6 +299,29 @@ struct VACTFILES_API FVActTextTokenUtils
 	static const TCHAR TOKEN_ESC;
 
 	static const TCHAR TOKEN_SCI;
+
+
+	static const TCHAR TOKEN_STRUCT_OPEN;
+
+	static const TCHAR TOKEN_STRUCT_CLOSE;
+
+	static const TCHAR TOKEN_ARRAY_OPEN;
+
+	static const TCHAR TOKEN_ARRAY_CLOSE;
+
+	static const TCHAR TOKEN_TUPLE_OPEN;
+
+	static const TCHAR TOKEN_TUPLE_CLOSE;
+
+	static const TCHAR TOKEN_TAG_OPEN;
+
+	static const TCHAR TOKEN_TAG_CLOSE;
+
+	static const TCHAR TOKEN_DILIM;
+
+	static const TCHAR TOKEN_PROP;
+
+	static const TCHAR TOKEN_ATTR;
 
 
 	static bool TokenValue(FVActParseCursor& Cursor, TArray<FVActParseCursor>& Cursors);
@@ -654,208 +678,426 @@ struct VACTFILES_API FVactTextParseUtils
 		bValid &= It.Token() == EVActParseToken::Array && ++It;
 		return bValid;
 	}
+protected:
+	FVactTextParseUtils() {}
 };
 
-struct VACTFILES_API FVActComposeUtils
+struct VACTFILES_API FVActTextEmitUtils
 {
-	static void ComposeProperty(const void* Key, EVActParseToken KeyToken, int32 N, const void* Value, EVActParseToken ValueToken, int32 M, TArray<FVActComposeCursor>& Cursors)
+	static void Emit(const TCHAR* Value, int32 N, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
 	{
-		Cursors.Add(FVActComposeCursor(KeyToken, Key, N));
-		Cursors.Add(FVActComposeCursor(ValueToken, Value, M));
-		Cursors.Add(FVActComposeCursor(EVActParseToken::Prop));
+		const TCHAR* _From = *Source + Source.Len();
+		Source.Append(Value, N);
+		Cursors.Add(FVActParseCursor(EVActParseToken::String, _From, _From + N));
 	}
 
-	static void Compose(const FQuat& Rotation, TArray<FVActComposeCursor>& Cursors)
+	static void Emit(const FName& Value, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
 	{
-		ComposeTupleOpen(Cursors);
-		Compose(Rotation.X, Cursors);
-		Compose(Rotation.Y, Cursors);
-		Compose(Rotation.Z, Cursors);
-		Compose(Rotation.W, Cursors);
-		ComposeTuple(Cursors);
+		const TCHAR* _From = *Source + Source.Len();
+		const FString _Value = Value.ToString();
+		const int32 N = _Value.Len();
+		Source.Append(*_Value, N);
+		Cursors.Add(FVActParseCursor(EVActParseToken::Name, _From, _From + N));
 	}
 
-	static void Compose(const FVector& Vector, TArray<FVActComposeCursor>& Cursors)
+	static void Emit(const float& Value, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
 	{
-		ComposeTupleOpen(Cursors);
-		Compose(Vector.X, Cursors);
-		Compose(Vector.Y, Cursors);
-		Compose(Vector.Z, Cursors);
-		ComposeTuple(Cursors);
+		const TCHAR* _From = *Source + Source.Len();
+		const FString _Value = FString::Printf(TEXT("%e"), Value);
+		const int32 N = _Value.Len();
+		Source.Append(*_Value, N);
+		Cursors.Add(FVActParseCursor(EVActParseToken::Num, _From, _From + N));
 	}
 
-	static void Compose(const FTransform& Transform, TArray<FVActComposeCursor>& Cursors)
+	static void Emit(const double& Value, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
 	{
-		ComposeTupleOpen(Cursors);
-		Compose(Transform.GetLocation(), Cursors);
-		Compose(Transform.GetRotation(), Cursors);
-		Compose(Transform.GetScale3D(), Cursors);
-		ComposeTuple(Cursors);
+		const TCHAR* _From = *Source + Source.Len();
+		const FString _Value = FString::Printf(TEXT("%e"), Value);
+		const int32 N = _Value.Len();
+		Source.Append(*_Value, N);
+		Cursors.Add(FVActParseCursor(EVActParseToken::Num, _From, _From + N));
+	}
+
+	static void Emit(const int32& Value, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	{
+		const TCHAR* _From = *Source + Source.Len();
+		const FString _Value = FString::FromInt(Value);
+		const int32 N = _Value.Len();
+		Source.Append(*_Value, N);
+		Cursors.Add(FVActParseCursor(EVActParseToken::Int, _From, _From + N));
+	}
+
+	static void Emit(const bool& Value, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	{
+		const TCHAR* _From = *Source + Source.Len();
+		const FString _Value = Value ? FVActTextTokenUtils::TOKEN_TRUE : FVActTextTokenUtils::TOKEN_FALSE;
+		const int32 N = _Value.Len();
+		Source.Append(*_Value, N);
+		Cursors.Add(FVActParseCursor(EVActParseToken::Bool, _From, _From + N));
+	}
+
+	static FORCEINLINE void Emit(const FString& Value, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	{
+		FString _Value = FString::Printf(TEXT("\"%s\""), *Value);
+		const int32 N = _Value.Len();
+		Emit(*_Value, N, Cursors, Source);
 	}
 
 	template<typename T>
-	static void ComposeEnum(T& Enum, TArray<FVActComposeCursor>& Cursors, TArray<FName> Map)
+	static FORCEINLINE void EmitEnum(T& Enum, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source, TArray<FName> Map)
 	{
-		if (Map.IsValidIndex((int32)Enum)) { FVActComposeUtils::Compose(Map[(int32)Enum], Cursors); }
+		if (Map.IsValidIndex((int32)Enum)) { Emit(Map[(int32)Enum], Cursors, Source); }
 	}
 
 	template<typename T>
-	static void ComposeEnum(T& Enum, TArray<FVActComposeCursor>& Cursors, TMap<T, FName> Map)
+	static FORCEINLINE void EmitEnum(T& Enum, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source, TMap<T, FName> Map)
 	{
 		FName* NamePtr = Map.Find(Enum);
-		if (NamePtr) { FVActComposeUtils::Compose(*NamePtr, Cursors); }
+		if (NamePtr) { Emit(*NamePtr, Cursors, Source); }
+	}
+
+	void EmitProperty(const TCHAR* Key, EVActParseToken KeyToken, int32 N, const TCHAR* Value, EVActParseToken ValueToken, int32 M, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	{
+		const TCHAR* _Key = *Source + Source.Len();
+		Source.Append(Key, N);
+		Cursors.Add(FVActParseCursor(KeyToken, _Key, _Key + N));
+
+		Source.AppendChar(FVActTextTokenUtils::TOKEN_PROP);
+
+		const TCHAR* _Value = *Source + Source.Len();
+		Source.Append(Value, M);
+		Cursors.Add(FVActParseCursor(ValueToken, _Value, _Value + M));
+
+		const TCHAR* _Prop = *Source + Source.Len();
+		Cursors.Add(FVActParseCursor(EVActParseToken::Prop, _Key, _Prop));
+	}
+
+	static void Emit(const FQuat& Rotation, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	{
+		const TCHAR* _From = *Source + Source.Len();
+		EmitTupleOpen(Cursors, Source);
+		FVActTextEmitUtils::Emit(Rotation.X, Cursors, Source); EmitDelimiter(Cursors, Source);
+		FVActTextEmitUtils::Emit(Rotation.Y, Cursors, Source); EmitDelimiter(Cursors, Source);
+		FVActTextEmitUtils::Emit(Rotation.Z, Cursors, Source); EmitDelimiter(Cursors, Source);
+		FVActTextEmitUtils::Emit(Rotation.W, Cursors, Source);
+		EmitTuple(Cursors, Source, _From);
+	}
+
+	static void EmitDelimiter(TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	{
+		Source.AppendChar(FVActTextTokenUtils::TOKEN_DILIM);
+	}
+
+	static void Emit(const FVector& Vector, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	{
+		const TCHAR* _From = *Source + Source.Len();
+		EmitTupleOpen(Cursors, Source);
+		FVActTextEmitUtils::Emit(Vector.X, Cursors, Source); EmitDelimiter(Cursors, Source);
+		FVActTextEmitUtils::Emit(Vector.Y, Cursors, Source); EmitDelimiter(Cursors, Source);
+		FVActTextEmitUtils::Emit(Vector.Z, Cursors, Source);
+		EmitTuple(Cursors, Source, _From);
+	}
+
+	static void Emit(const FTransform& Transform, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	{
+		const TCHAR* _From = *Source + Source.Len();
+		EmitTupleOpen(Cursors, Source);
+		Emit(Transform.GetLocation(), Cursors, Source); EmitDelimiter(Cursors, Source);
+		Emit(Transform.GetRotation(), Cursors, Source); EmitDelimiter(Cursors, Source);
+		Emit(Transform.GetScale3D(), Cursors, Source);
+		EmitTuple(Cursors, Source, _From);
+	}
+
+	static void EmitStruct(TArray<FVActParseCursor>& Cursors, FStringBuilderBase& Source, const TCHAR* From)
+	{
+
+		Source.AppendChar(FVActTextTokenUtils::TOKEN_STRUCT_CLOSE);
+		const TCHAR* _To = *Source + Source.Len();
+		Cursors.Add(FVActParseCursor(EVActParseToken::Struct, From, _To));
+	}
+
+	static void EmitArray(TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source, const TCHAR* From)
+	{
+		Source.AppendChar(FVActTextTokenUtils::TOKEN_ARRAY_CLOSE);
+		const TCHAR* _To = *Source + Source.Len();
+		Cursors.Add(FVActParseCursor(EVActParseToken::Array, From, _To));
+	}
+
+	static void EmitTuple(TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source, const TCHAR* From)
+	{
+		Source.AppendChar(FVActTextTokenUtils::TOKEN_TUPLE_CLOSE);
+		const TCHAR* _To = *Source + Source.Len();
+		Cursors.Add(FVActParseCursor(EVActParseToken::Tuple, From, _To));
+	}
+
+	static void EmitTag(TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source, const TCHAR* From)
+	{
+		Source.AppendChar(FVActTextTokenUtils::TOKEN_TAG_CLOSE);
+		const TCHAR* _To = *Source + Source.Len();
+		Cursors.Add(FVActParseCursor(EVActParseToken::Tag, From, _To));
+	}
+
+	static void EmitProperty(TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source, const TCHAR* From)
+	{
+		const TCHAR* _To = *Source + Source.Len();
+		Cursors.Add(FVActParseCursor(EVActParseToken::Prop, From, _To));
+	}
+
+	static void EmitAttribute(TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source, const TCHAR* From)
+	{
+		const TCHAR* _To = *Source + Source.Len();
+		Cursors.Add(FVActParseCursor(EVActParseToken::Attr, From, _To));
+	}
+
+	static void EmitStructOpen(TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	{
+		const TCHAR* _From = *Source + Source.Len();
+		Source.AppendChar(FVActTextTokenUtils::TOKEN_STRUCT_OPEN);
+		Cursors.Add(FVActParseCursor(EVActParseToken::_Struct, _From, _From + 1));
+	}
+
+	static void EmitArrayOpen(TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	{
+		const TCHAR* _From = *Source + Source.Len();
+		Source.AppendChar(FVActTextTokenUtils::TOKEN_ARRAY_OPEN);
+		Cursors.Add(FVActParseCursor(EVActParseToken::_Array, _From, _From + 1));
+	}
+
+	static void EmitTupleOpen(TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	{
+		const TCHAR* _From = *Source + Source.Len();
+		Source.AppendChar(FVActTextTokenUtils::TOKEN_TUPLE_OPEN);
+		Cursors.Add(FVActParseCursor(EVActParseToken::_Tuple, _From, _From + 1));
+	}
+
+	static void EmitTagOpen(TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	{
+		const TCHAR* _From = *Source + Source.Len();
+		Source.AppendChar(FVActTextTokenUtils::TOKEN_TAG_OPEN);
+		Cursors.Add(FVActParseCursor(EVActParseToken::_Tag, _From, _From + 1));
+	}
+
+	static void EmitPropertyOpen(const FName& Key, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	{
+		Emit(Key, Cursors, Source);
+		Source.AppendChar(FVActTextTokenUtils::TOKEN_PROP);
+	}
+
+	static void EmitAttributeOpen(const FName& Key, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	{
+		Emit(Key, Cursors, Source);
+		Source.AppendChar(FVActTextTokenUtils::TOKEN_ATTR);
 	}
 
 	template<typename T>
-	static void ComposeTuple(T* Tuple, TArray<FVActComposeCursor>& Cursors, int32 Count)
+	static void EmitEnumProperty(const FName& Key, const T& Enum, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source, TArray<FName> Map)
 	{
-		ComposeTupleOpen(Cursors);
-		for (int32 Index = 0; Index < Count; ++Index) { FVActComposeUtils::Compose(Tuple[Index], Cursors); }
-		ComposeTuple(Cursors);
+		const TCHAR* _From = *Source + Source.Len();
+		Emit(Key, Cursors, Source);
+		Source.AppendChar(FVActTextTokenUtils::TOKEN_PROP);
+		EmitEnum(Enum, Cursors, Source, Map);
+		const TCHAR* _To = *Source + Source.Len();
+		Cursors.Add(FVActParseCursor(EVActParseToken::Prop, _From, _To));
 	}
 
 	template<typename T>
-	static void ComposeTuple(TArray<T> Tuple, TArray<FVActComposeCursor>& Cursors)
+	static void EmitEnumProperty(const FName& Key, const T& Enum, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source, TMap<T, FName> Map)
 	{
-		ComposeTupleOpen(Cursors);
-		for (const T& _Ref : Tuple) { FVActComposeUtils::Compose(_Ref, Cursors); }
-		ComposeTuple(Cursors);
+		const TCHAR* _From = *Source + Source.Len();
+		Emit(Key, Cursors, Source);
+		Source.AppendChar(FVActTextTokenUtils::TOKEN_PROP);
+		EmitEnum(Enum, Cursors, Source, Map);
+		const TCHAR* _To = *Source + Source.Len();
+		Cursors.Add(FVActParseCursor(EVActParseToken::Prop, _From, _To));
 	}
 
 	template<typename T>
-	static void ComposeArray(T* Array, TArray<FVActComposeCursor>& Cursors, int32 Count)
+	static void EmitProperty(const FName& Key, const T& Value, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
 	{
-		ComposeArrayOpen(Cursors);
-		for (int32 Index = 0; Index < Count; ++Index) { FVActComposeUtils::Compose(Array[Index], Cursors); }
-		ComposeArray(Cursors);
+		const TCHAR* _From = *Source + Source.Len();
+		Emit(Key, Cursors, Source);
+		Source.AppendChar(FVActTextTokenUtils::TOKEN_PROP);
+		Emit(Value, Cursors, Source);
+		const TCHAR* _To = *Source + Source.Len();
+		Cursors.Add(FVActParseCursor(EVActParseToken::Prop, _From, _To));
 	}
 
 	template<typename T>
-	static void ComposeArray(TArray<T> Array, TArray<FVActComposeCursor>& Cursors)
+	static void EmitAttribute(const FName& Key, const T& Value, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
 	{
-		ComposeArrayOpen(Cursors);
-		for (const T& _Ref : Array) { FVActComposeUtils::Compose(_Ref, Cursors); }
-		ComposeArray(Cursors);
+		const TCHAR* _From = *Source + Source.Len();
+		Emit(Key, Cursors, Source);
+		Source.AppendChar(FVActTextTokenUtils::TOKEN_ATTR);
+		Emit(Value, Cursors, Source);
+		const TCHAR* _To = *Source + Source.Len();
+		Cursors.Add(FVActParseCursor(EVActParseToken::Attr, _From, _To));
 	}
 
 	template<typename T>
-	static void ComposeRefArray(TArray<T> Array, TArray<FVActComposeCursor>& Cursors)
+	static void EmitAttribute(const FName& Key, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
 	{
-		ComposeArrayOpen(Cursors);
-		for (const T& _Ref : Array) { FVActComposeUtils::Compose(_Ref->GetPathName(), Cursors); }
-		ComposeArray(Cursors);
+		const TCHAR* _From = *Source + Source.Len();
+		Emit(Key, Cursors, Source);
+		const TCHAR* _To = *Source + Source.Len();
+		Cursors.Add(FVActParseCursor(EVActParseToken::Attr, _From, _To));
 	}
 
 	template<typename T>
-	static void ComposeRefArray(TArray<TObjectPtr<T>> Array, TArray<FVActComposeCursor>& Cursors)
+	static void EmitEnumAttribute(const FName& Key, const T& Value, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source, TArray<FName> Map)
 	{
-		ComposeArrayOpen(Cursors);
-		for (const TObjectPtr<T>& _Ref : Array) { FVActComposeUtils::Compose(_Ref->GetPathName(), Cursors); }
-		ComposeArray(Cursors);
+		const TCHAR* _From = *Source + Source.Len();
+		Emit(Key, Cursors, Source);
+		Source.AppendChar(FVActTextTokenUtils::TOKEN_ATTR);
+		EmitEnum(Value, Cursors, Source, Map);
+		const TCHAR* _To = *Source + Source.Len();
+		Cursors.Add(FVActParseCursor(EVActParseToken::Attr, _From, _To));
 	}
 
-	static FORCEINLINE void ComposeStruct(TArray<FVActComposeCursor>& Cursors)
+	template<typename T>
+	static void EmitEnumAttribute(const FName& Key, const T& Value, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source, TMap<T, FName> Map)
 	{
-		Cursors.Add(FVActComposeCursor(EVActParseToken::Struct));
+		const TCHAR* _From = *Source + Source.Len();
+		Emit(Key, Cursors, Source);
+		Source.AppendChar(FVActTextTokenUtils::TOKEN_ATTR);
+		EmitEnum(Value, Cursors, Source, Map);
+		const TCHAR* _To = *Source + Source.Len();
+		Cursors.Add(FVActParseCursor(EVActParseToken::Attr, _From, _To));
 	}
 
-	static FORCEINLINE void ComposeArray(TArray<FVActComposeCursor>& Cursors)
+	template<typename T>
+	static void EmitTuple(T* Tuple, TArray<FVActParseCursor>& Cursors, int32 Count, TStringBuilderBase<TCHAR>& Source)
 	{
-		Cursors.Add(FVActComposeCursor(EVActParseToken::Array));
+		const TCHAR* _From = *Source + Source.Len();
+		EmitTupleOpen(Cursors, Source);
+		for (int32 Index = 0; Index < Count; ++Index)
+		{ 
+			Emit(Tuple[Index], Cursors, Source);
+			if (Index < Count - 1) { EmitDelimiter(Cursors, Source); }
+		}
+		EmitTuple(Cursors, Source, _From);
 	}
 
-	static FORCEINLINE void ComposeTuple(TArray<FVActComposeCursor>& Cursors)
+	template<typename T>
+	static void EmitTuple(TArray<T> Tuple, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
 	{
-		Cursors.Add(FVActComposeCursor(EVActParseToken::Tuple));
+		const int32 Count = Tuple.Num();
+		const TCHAR* _From = *Source + Source.Len();
+		EmitTupleOpen(Cursors, Source);
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Emit(Tuple[Index], Cursors, Source);
+			if (Index < Count - 1) { EmitDelimiter(Cursors, Source); }
+		}
+		EmitTuple(Cursors, Source, _From);
 	}
 
-	static FORCEINLINE void ComposeRecord(TArray<FVActComposeCursor>& Cursors)
+	template<typename T>
+	static void EmitArray(T* Array, TArray<FVActParseCursor>& Cursors, int32 Count, TStringBuilderBase<TCHAR>& Source)
 	{
-		Cursors.Add(FVActComposeCursor(EVActParseToken::Record));
+		const TCHAR* _From = *Source + Source.Len();
+		EmitArrayOpen(Cursors, Source);
+		for (int32 Index = 0; Index < Count; ++Index)
+		{ 
+			Emit(Array[Index], Cursors, Source); 
+			if (Index < Count - 1) { EmitDelimiter(Cursors, Source); }
+		}
+		EmitArray(Cursors, Source, _From);
 	}
 
-	static FORCEINLINE void ComposeProperty(TArray<FVActComposeCursor>& Cursors)
+	template<typename T>
+	static void EmitEnumArray(T* Array, TArray<FVActParseCursor>& Cursors, int32 Count, TStringBuilderBase<TCHAR>& Source, TArray<FName> Map)
 	{
-		Cursors.Add(FVActComposeCursor(EVActParseToken::Prop));
+		const TCHAR* _From = *Source + Source.Len();
+		EmitArrayOpen(Cursors, Source);
+		for (int32 Index = 0; Index < Count; ++Index)
+		{ 
+			EmitEnum(Array[Index], Cursors, Source, Map);
+			if (Index < Count - 1) { EmitDelimiter(Cursors, Source); }
+		}
+		EmitArray(Cursors, Source, _From);
 	}
 
-	static FORCEINLINE void ComposeStructOpen(TArray<FVActComposeCursor>& Cursors)
+	template<typename T>
+	static void EmitEnumArray(T* Array, TArray<FVActParseCursor>& Cursors, int32 Count, TStringBuilderBase<TCHAR>& Source, TMap<T, FName> Map)
 	{
-		Cursors.Add(FVActComposeCursor(EVActParseToken::_Struct));
+		const TCHAR* _From = *Source + Source.Len();
+		EmitArrayOpen(Cursors, Source);
+		for (int32 Index = 0; Index < Count; ++Index)
+		{ 
+			EmitEnum(Array[Index], Cursors, Source, Map);
+			if (Index < Count - 1) { EmitDelimiter(Cursors, Source); }
+		}
+		EmitArray(Cursors, Source, _From);
 	}
 
-	static FORCEINLINE void ComposeArrayOpen(TArray<FVActComposeCursor>& Cursors)
+	template<typename T>
+	static void EmitArray(TArray<T> Array, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
 	{
-		Cursors.Add(FVActComposeCursor(EVActParseToken::_Array));
+		const int32 Count = Array.Num();
+		const TCHAR* _From = *Source + Source.Len();
+		EmitArrayOpen(Cursors, Source);
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Emit(Array[Index], Cursors, Source);
+			if (Index < Count - 1) { EmitDelimiter(Cursors, Source); }
+		}
+		EmitArray(Cursors, Source, _From);
 	}
 
-	static FORCEINLINE void ComposeTupleOpen(TArray<FVActComposeCursor>& Cursors)
+	template<typename T>
+	static void EmitEnumArray(TArray<T> Array, TArray<FVActParseCursor>& Cursors, int32 Count, TStringBuilderBase<TCHAR>& Source, TArray<FName> Map)
 	{
-		Cursors.Add(FVActComposeCursor(EVActParseToken::_Tuple));
+		const TCHAR* _From = *Source + Source.Len();
+		EmitArrayOpen(Cursors, Source);
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			EmitEnum(Array[Index], Cursors, Source, Map);
+			if (Index < Count - 1) { EmitDelimiter(Cursors, Source); }
+		}
+		EmitArray(Cursors, Source, _From);
 	}
 
-	static FORCEINLINE void ComposeRecordOpen(TArray<FVActComposeCursor>& Cursors)
+	template<typename T>
+	static void EmitEnumArray(TArray<T> Array, TArray<FVActParseCursor>& Cursors, int32 Count, TStringBuilderBase<TCHAR>& Source, TMap<T, FName> Map)
 	{
-		Cursors.Add(FVActComposeCursor(EVActParseToken::_Record));
+		const TCHAR* _From = *Source + Source.Len();
+		EmitArrayOpen(Cursors, Source);
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			EmitEnum(Array[Index], Cursors, Source, Map);
+			if (Index < Count - 1) { EmitDelimiter(Cursors, Source); }
+		}
+		EmitArray(Cursors, Source, _From);
 	}
 
-	static FORCEINLINE void Compose(const TCHAR* Value, int32 N, TArray<FVActComposeCursor>& Cursors)
+	template<typename T>
+	static void EmitRefArray(TArray<T> Array, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
 	{
-		Cursors.Add(FVActComposeCursor(EVActParseToken::String, (void*)Value, N));
+		const int32 Count = Array.Num();
+		const TCHAR* _From = *Source + Source.Len();
+		EmitArrayOpen(Cursors, Source);
+		for (int32 Index = 0; Index < Count; ++Index)
+		{
+			Emit(Array[Index]->GetPathName(), Cursors, Source);
+			if (Index < Count - 1) { EmitDelimiter(Cursors, Source); }
+		}
+		EmitArray(Cursors, Source, _From);
 	}
 
-	static FORCEINLINE void Compose(const FName& Value, TArray<FVActComposeCursor>& Cursors)
+	template<typename T>
+	static void EmitRefArray(TArray<TObjectPtr<T>> Array, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
 	{
-		Cursors.Add(FVActComposeCursor(EVActParseToken::Name, (void*)&Value, sizeof(FName)));
+		const int32 Count = Array.Num();
+		const TCHAR* _From = *Source + Source.Len();
+		EmitArrayOpen(Cursors, Source);
+		for (int32 Index = 0; Index < Count; ++Index)
+		{ 
+			Emit(Array[Index]->GetPathName(), Cursors, Source);
+			if (Index < Count - 1) { EmitDelimiter(Cursors, Source); }
+		}
+		EmitArray(Cursors, Source, _From);
 	}
 
-	static FORCEINLINE void Compose(const float& Value, TArray<FVActComposeCursor>& Cursors)
-	{
-		Cursors.Add(FVActComposeCursor(EVActParseToken::Num, (void*)&Value, sizeof(float)));
-	}
-
-	static FORCEINLINE void Compose(const double& Value, TArray<FVActComposeCursor>& Cursors)
-	{
-		Cursors.Add(FVActComposeCursor(EVActParseToken::Num, (void*)&Value, sizeof(double)));
-	}
-
-	static FORCEINLINE void Compose(const int32& Value, TArray<FVActComposeCursor>& Cursors)
-	{
-		Cursors.Add(FVActComposeCursor(EVActParseToken::Int, (void*)&Value, sizeof(int32)));
-	}
-
-	static FORCEINLINE void Compose(const bool& Value, TArray<FVActComposeCursor>& Cursors)
-	{
-		Cursors.Add(FVActComposeCursor(EVActParseToken::Bool, (void*)&Value, sizeof(bool)));
-	}
-
-	static FORCEINLINE void ComposeProperty(const FName& Key, const int32& Value, TArray<FVActComposeCursor>& Cursors)
-	{
-		ComposeProperty(&Key, EVActParseToken::Name, sizeof(FName), &Value, EVActParseToken::Int, sizeof(FName), Cursors);
-	}
-
-	static FORCEINLINE void ComposeProperty(const FName& Key, const float& Value, TArray<FVActComposeCursor>& Cursors)
-	{
-		ComposeProperty(&Key, EVActParseToken::Name, sizeof(FName), &Value, EVActParseToken::Num, sizeof(FName), Cursors);
-	}
-
-	static FORCEINLINE void ComposeProperty(const FName& Key, const FName& Value, TArray<FVActComposeCursor>& Cursors)
-	{
-		ComposeProperty(&Key, EVActParseToken::Name, sizeof(FName), &Value, EVActParseToken::Name, sizeof(FName), Cursors);
-	}
-
-	static FORCEINLINE void ComposeProperty(const FName& Key, const FString& Value, TArray<FVActComposeCursor>& Cursors)
-	{
-		ComposeProperty(&Key, EVActParseToken::Name, sizeof(FName), *Value, EVActParseToken::String, Value.Len() * sizeof(TCHAR), Cursors);
-	}
-
-	static FORCEINLINE void Compose(const FString& Value, TArray<FVActComposeCursor>& Cursors)
-	{
-		Compose(*Value, Value.Len() * sizeof(TCHAR), Cursors);
-	}
-
-	static FORCEINLINE void TokenName(const FString& Value, TArray<FVActComposeCursor>& Cursors)
-	{
-		Compose(*Value, Value.Len() * sizeof(TCHAR), Cursors);
-	}
+protected:
+	FVActTextEmitUtils() {}
 };

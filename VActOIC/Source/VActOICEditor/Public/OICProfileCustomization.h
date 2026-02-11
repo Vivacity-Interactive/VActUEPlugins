@@ -26,9 +26,13 @@ public:
 
 	static bool ParseFromCursorsJsonStrict(class UOICProfile* InContext, const FVActParseRoot& Root);
 
-	static bool ComposeToCursors(class UOICProfile* InContext, FVActComposeRoot& Root);
+	static bool EmitToCursorsBinary(class UOICProfile* InContext, FVActEmitRoot& Root);
 
-	static bool ComposeToCursorsCompact(class UOICProfile* InContext, FVActComposeRoot& Root);
+	static bool EmitToCursorsCompact(class UOICProfile* InContext, FVActEmitRoot& Root);
+
+	static bool EmitToCursorsJson(class UOICProfile* InContext, FVActEmitRoot& Root);
+
+	static bool EmitToCursorsJsonStrict(class UOICProfile* InContext, FVActEmitRoot& Root);
 
 protected:
 	static bool _ParseOICMeta(FOICMeta& Into, FVActParseRootIt& It, UObject* InOuter = nullptr);

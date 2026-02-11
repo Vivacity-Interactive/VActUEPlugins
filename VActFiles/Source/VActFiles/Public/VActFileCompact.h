@@ -8,7 +8,7 @@ struct VACTFILES_API FVActFileCompact
 {
 	static bool Load(FVActParseRoot& Root, const TCHAR* Path);
 
-	static bool Save(const FVActComposeRoot& Root, const TCHAR* Path);
+	static bool Save(const FVActEmitRoot& Root, const TCHAR* Path);
 
 protected:
 	FVActFileCompact() {};
