@@ -14,18 +14,18 @@ git checkout main
 _Don't forget ``cd Plugins`` before setting ``sparse-checkout``! If you forget: current git repro will be compromised_
 
 List of Plugins
-- [VActBase](VActBase/README.md)
-- [VActFiles](VActFiles/README.md)
-- [VActOIC](VActOIC/README.md) _(beta, oic.v3, vson.v2)_
-- [VActDevices](VActDevices/README.md) _(alpha)_
-- [VActCuDNN](VActCuDNN/README.md) _(Unfinished)_
-- [VActML](VActML/README.md) _(boiler)_
-- [VActVR](VActVR/README.md)
-- [VActCamera](VActCamera/README.md)
-- [VActMath](VActMath/README.md) _(alpha)_
-- [VActSTT](VActSTT/README.md) _(beta)_
-- [VActAPI](VActAPI/README.md) _(dev-limited)_
-- [VActBeats](VActAPI/README.md) _(wip, [dev-api-1.0.0](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/dev-api-1.0.0))_
+- [VActBase](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/main/VActBase)
+- [VActFiles](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/main/VActFiles)
+- [VActOIC](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/main/ActOI) _(beta, oic.v3, vson.v2)_
+- [VActDevices](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/main/VActDevices) _(alpha)_
+- [VActCuDNN](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/main/VActCuDNN) _(Unfinished)_
+- [VActML](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/main/VActML) _(boiler)_
+- [VActVR](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/main/VActVR)
+- [VActCamera](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/main/VActCamera)
+- [VActMath](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/main/VActMath) _(alpha)_
+- [VActSTT](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/main/VActSTT) _(beta)_
+- [VActAPI](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/dev-api-1.0.0/VActAPI) _(dev-limited, dev-api-1.0.0)_
+- [VActBeats](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/dev-api-1.0.0/VActBeats) _(wip)_
 
 ## VActBase
 Contains the basic library items Vivacity Interactive uses for most projects as bases, includes, also wrapper functinos TArray manipulations. [VActBase](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/main/VActBase)
