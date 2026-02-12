@@ -25,7 +25,7 @@ List of Plugins
 - [VActMath](VActMath/README.md) _(alpha)_
 - [VActSTT](VActSTT/README.md) _(beta)_
 - [VActAPI](VActAPI/README.md) _(dev-limited)_
-- [VActBeats](VActAPI/README.md) _(wip)_
+- [VActBeats](VActAPI/README.md) _(wip, [dev-api-1.0.0](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/dev-api-1.0.0))_
 
 ## VActBase
 Contains the basic library items Vivacity Interactive uses for most projects as bases, includes, also wrapper functinos TArray manipulations. [VActBase](VActBase/README.md)
