@@ -27,7 +27,7 @@ First `vson` is a extended json version with some extra atomic types, it may eve
 
 Secondly note that whenever written `"<Tag1|...|TagN>"` in string these are to be replaced with one of the tags `"Tag1"`, Same holds for `<Tag1|...|TagN>` replaces with `Tag`.
 
-Keep in mind that `Meta` entry format is still being worked on. oic value types for `Meta-Properties` spesifically `Float#` and `Int#` range from `2 to 6`. 
+Keep in mind that `Meta` entry format is still being worked on. oic value types for `Meta-Properties` specifically `Float#` and `Int#` range from `2 to 6`. 
 ```go
 {
     Type: OIC,
@@ -66,14 +66,14 @@ Keep in mind that `Meta` entry format is still being worked on. oic value types 
 instance tuple is composed of `(<id>,<object-id>,<parent-id>,<meta-id>,(<location>,<quaternion>,<scale>))`, `Metas` section is being reworked atm for OIC format `V4`.
 
 ## WIP OIC Format V4 (oic.v4, vson.v3)
-- vson.v3 will allow tag atomic notation `<Tag>` or flags '<Tag0|...|TagN>` to seperate enum types from name types
+- vson.v3 will allow tag atomic notation `<Tag>` or flags '<Tag0|...|TagN>` to separate enum types from name types
 - vson.v3 will allow name var chaining `Physics.Info.Mass`
-- `Object.Name` propertie is to be a `Axis` independed indetifer to resolve assets in other `Axis`
-- `Object.CLass` is added to instantiate an asset of aparticular class/component.
-- `Instance.Index` is add to the typle to track particles in instance buffers. or respctivly to `Object.Class`
-- Packed the meta into a tuple of more gemeral form, allowing `Custom` property type
-- meta also allows recustion of its onwn property map using type `Properties`
-- `Metas` will likely be stored in a seperate file with same name `L_My_File.oic` with `L_My_File.oicm`
+- `Object.Name` property is to be an `Axis` independent identifier to resolve assets in other `Axis`
+- `Object.CLass` is added to instantiate an asset of a particular class/component.
+- `Instance.Index` is added to the type to track particles in instance buffers. or respectively to `Object.Class`
+- Packed the meta into a tuple of more general form, allowing `Custom` property type
+- meta also allows recursion of its own property map using type `Properties`
+- `Metas` will likely be stored in a separate file with same name `L_My_File.oic` with `L_My_File.oicm`
 
 Do not confuse the tag notation below with the actual tag for vson.
 ```go
@@ -137,6 +137,6 @@ A focus on extending some atomic types
 - support for path atomic type `\Path\With Space\` and relative `.\Path` or `..\Path`
 - string mixture in path `\Path\"My string path"\Next`
 - regex mixture in path `\Path\/\w+\.*(png|jpg)/`
-- string concatination support `"string0" "string2"`
+- string concatenation support `"string0" "string2"`
 - regex atomic type `/.*_v\n[0-9a-zA-Z]]/` as `/<regex>/`
 - maybe comment block support `/**/`
