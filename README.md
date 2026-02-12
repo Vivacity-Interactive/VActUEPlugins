@@ -16,7 +16,7 @@ _Don't forget ``cd Plugins`` before setting ``sparse-checkout``! If you forget: 
 List of Plugins
 - [VActBase](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/main/VActBase)
 - [VActFiles](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/main/VActFiles)
-- [VActOIC](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/main/ActOI) _(beta, oic.v3, vson.v2)_
+- [VActOIC](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/main/VActOIC) _(beta, oic.v3, vson.v2)_
 - [VActDevices](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/main/VActDevices) _(alpha)_
 - [VActCuDNN](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/main/VActCuDNN) _(Unfinished)_
 - [VActML](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/main/VActML) _(boiler)_
