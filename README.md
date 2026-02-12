@@ -28,19 +28,19 @@ List of Plugins
 - [VActBeats](VActAPI/README.md) _(wip, [dev-api-1.0.0](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/dev-api-1.0.0))_
 
 ## VActBase
-Contains the basic library items Vivacity Interactive uses for most projects as bases, includes, also wrapper functinos TArray manipulations. [VActBase](VActBase/README.md)
+Contains the basic library items Vivacity Interactive uses for most projects as bases, includes, also wrapper functinos TArray manipulations. [VActBase](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/main/VActBase)
 
 ![Static Badge](https://img.shields.io/badge/Note-blue)
 _still working out what to put here, will adress a refactor to make the use of ``TStackHandle<T>`` more usable_
 
 ## VActFiles
-This plugin allows for loading VAct Json (Vson), and has other helper files for Tokenizing and reading and interpreting files. [VActFiles](VActFiles/README.md)
+This plugin allows for loading VAct Json (Vson), and has other helper files for Tokenizing and reading and interpreting files. [VActFiles](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/main/VActFiles)
 
 ![Static Badge](https://img.shields.io/badge/Note-blue)
 _My be refactored to make the use of Tokenization and Emit more easy_
 
 ## VActOIC
-This plugin allows for loading VAct Json (Vson) type files and instantiate entire compositions of objects like meshes, and particles, also includes construction ``SceneComponent`` or ``ActorComponent`` onto object that have these meta data assigned. [VActOIC](VActOIC/README.md)
+This plugin allows for loading VAct Json (Vson) type files and instantiate entire compositions of objects like meshes, and particles, also includes construction ``SceneComponent`` or ``ActorComponent`` onto object that have these meta data assigned. [VActOIC](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/main/VActOIC)
 
 ![Static Badge](https://img.shields.io/badge/Note-blue)
 _tested on 200.000+ instances, now also includes a limited exporter for UE_
@@ -52,55 +52,55 @@ _This plugin depends on the ``VActFiles`` plugin, formats compact and binary ar 
 _Update breaks using tracking, sor reloading atm requires you to delete the OICActor and reassign and update again_
 
 ## VActDevices
-Allows to communicate with COM devices and Bluetooth, tested with Arduino simple setup. [VActDevices](VActDevices/README.md)
+Allows to communicate with COM devices and Bluetooth, tested with Arduino simple setup. [VActDevices](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/main/VActDevices)
 
 ![Static Badge](https://img.shields.io/badge/Note-blue)
 _Bluetooth is still incomplete, need to setup connection protocol and test, listing available devices is already successful, also still resolving best usage approach_
 
 ## VActCuDNN
-This is still work in progress, attempt to bring more native ML to unreal engine, but this may cause GPU resource competition. best may be to hook into UE intial support with Cuda and CuDNN duable. [VActCuDNN](VActCuDNN/README.md)
+This is still work in progress, attempt to bring more native ML to unreal engine, but this may cause GPU resource competition. best may be to hook into UE intial support with Cuda and CuDNN duable. [VActCuDNN](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/main/VActCuDNN)
 
 ![Static Badge](https://img.shields.io/badge/Note-blue)
 _similar attempt using tensorflow direct support, however tensorflow core packag had some compilation flag issues, and tensorflow full library depends on pythorgh and python compilation, this last dependecy I prefer to avoid_
 
 ## VActML
-This is still work in progress, attempt to bring more native ML to unreal engine, independed of too many external frameworks and packages for runtime use. earliest focuses will be by order. [VActML](VActML/README.md)
+This is still work in progress, attempt to bring more native ML to unreal engine, independed of too many external frameworks and packages for runtime use. earliest focuses will be by order. [VActML](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/main/VActML)
 
 ![Static Badge](https://img.shields.io/badge/Note-blue)
 _will also attempt to focus on including compute shader versions of algorithms, maybe tensor shader if internally accessible by unreal engine, or abusing other shaders that may be isomorphic in behaviour_
 
 ## VActVR
-VR C++ implementation, and Contains default blueprint derivatives, containing interaction components and other VR specific helpers. Specifically focused on keeping clear separation from VR specific `Pawn` as Camera and Embodied representation. [VActVR](VActVR/README.md)
+VR C++ implementation, and Contains default blueprint derivatives, containing interaction components and other VR specific helpers. Specifically focused on keeping clear separation from VR specific `Pawn` as Camera and Embodied representation. [VActVR](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/main/VActVR)
 
 ![Static Badge](https://img.shields.io/badge/Note-blue)
 _interaction components are still being implemented, and may change_
 
 ## VActCamera
-Noir-Like Camera, as if an operator is handling it, allows usage of hints and samplers to match camera behaviours to areas. Hints contain info about camera settings and behaviour plus suggestive location and rotation. [VActCamera](VActCamera/README.md)
+Noir-Like Camera, as if an operator is handling it, allows usage of hints and samplers to match camera behaviours to areas. Hints contain info about camera settings and behaviour plus suggestive location and rotation. [VActCamera](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/main/VActCamera)
 
 ![Static Badge](https://img.shields.io/badge/Note-blue)
 _Still working a minimal version and a complex versions, and may merge it with a dependency on ``VActMath``_
 
 ## VActMath
-ALl math functions for pointer type arrays, to use with `reinterpret_cast<float*>(&MyFloatPropertyStruct)` or just (float*)&MyFloatPropertyStruct. Functions like `Dot`, `Lerp`, `Clamp` and more. [VActMath](VActMath/README.md)
+ALl math functions for pointer type arrays, to use with `reinterpret_cast<float*>(&MyFloatPropertyStruct)` or just (float*)&MyFloatPropertyStruct. Functions like `Dot`, `Lerp`, `Clamp` and more. [VActCamera](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/main/VActMath)
 
 ![Static Badge](https://img.shields.io/badge/Note-blue)
 _it may be extended with tenrsor like behaviours like poll and kernel like functions for multidimensions_
 
 ## VActSTT
-Functions for speach to text using a compilation of wisper cpp library, wrapped into UE like classes usable in Games, loading models localy. [VActSTT](VActSTT/README.md)
+Functions for speach to text using a compilation of wisper cpp library, wrapped into UE like classes usable in Games, loading models localy. [VActSTT](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/main/VActSTT)
 
 ![Static Badge](https://img.shields.io/badge/Note-blue)
 _will be extended with more functions part of wisper cpp as well_
 
 ## VActAPI (See Branch dev-api-1.0.0)
-Allows for running server like behaviour (an aip-route-service) on your game instance on a local network, allows for direction connection like uploading images or other assets, or simply to communcate, allowing `Blueprint` extension on callbacks. [VActAPI](VActAPI/README.md)
+Allows for running server like behaviour (an aip-route-service) on your game instance on a local network, allows for direction connection like uploading images or other assets, or simply to communcate, allowing `Blueprint` extension on callbacks. [VActAPI](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/dev-api-1.0.0/VActAPI)
 
 ![Static Badge](https://img.shields.io/badge/Warning-yellow)
 _Unfortunately, still, due to the strange nature of its singleton behaviour, the API does not work well with PIE, so testing can only work at first startup, a re run of PIE or compilation will break the references_
 
 ## VActBeats (wip)
-Features a particular approach of story event management, rooted from emotional state spaces allowing, using techniques like `KDTree` for `BeatVectors` sampling from `BeatPool`s or (linear) `BeatStack`s. [VActBeats](VActBeats/README.md)
+Features a particular approach of story event management, rooted from emotional state spaces allowing, using techniques like `KDTree` for `BeatVectors` sampling from `BeatPool`s or (linear) `BeatStack`s. [VActBeats](https://github.com/Vivacity-Interactive/VActUEPlugins/tree/main/VActBeats)
 
 ![Static Badge](https://img.shields.io/badge/Note-blue)
 _stil under construction_
