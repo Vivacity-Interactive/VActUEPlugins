@@ -1,0 +1,30 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "VActBeats",
+	"Description": "",
+	"Category": "Other",
+	"CreatedBy": "Vivacity Interactive",
+	"CreatedByURL": "vivacityinteractive.com",
+	"DocsURL": "docs.vact.com/beats-lib",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": true,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "VActBeats",
+			"Type": "Runtime",
+			"LoadingPhase": "PreLoadingScreen"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "VActMath",
+			"Enabled": true
+		}
+	]
+}
