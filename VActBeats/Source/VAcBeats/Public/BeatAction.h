@@ -20,7 +20,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void Execute(
 		float DeltaTime, 
-		AActor* Self, 
+		AActor* Actor, 
 		AActor* Context,
 		const FBeatContext& BeatContext,
 		AActor* Owner = nullptr

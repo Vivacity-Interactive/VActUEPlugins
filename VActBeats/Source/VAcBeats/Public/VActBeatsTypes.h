@@ -5,6 +5,33 @@
 #include "CoreMinimal.h"
 #include "VActBeatsTypes.generated.h"
 
+UENUM()
+enum class EBeatAsset
+{
+	None = 0,
+	Asset,
+	Text
+};
+
+UENUM()
+enum class EBeatMode
+{
+	None = 0,
+	Scalar,
+	Vector
+	//Modulo,
+	//Minimum,
+};
+
+UENUM()
+enum class EBeatPrototype
+{
+	None = 0,
+	Point,
+	Vector,
+	Interval
+};
+
 template<uint32 NumFeatures>
 struct TBeatVector : TMathVector<float, NumFeatures>
 {
@@ -15,39 +42,98 @@ struct TBeatEffector : TMathEffector<NumFeatures>
 {
 };
 
-template<uint32 NumFeatures>
-struct TBeatEffect : TMathEffect<float, NumFeatures>
-{
-};
-
 template<typename TypeBeatVector>
 using TBeatVectorOf = TBeatVector<sizeof(TypeBeatVector) / sizeof(float)>;
 
 template<typename TypeBeatVector>
 using TBeatEffectorOf = TBeatEffector<sizeof(TypeBeatVector) / sizeof(float)>;
 
-template<typename TypeBeatVector>
-using TBeatEffectOf = TBeatEffector<sizeof(TypeBeatVector) / sizeof(float)>;
+template<typename T0, typename T1 = uint8>
+struct TAlignasObject {
+	alignas(TSubclassOf<T0>) T1 Class[sizeof(TSubclassOf<T0>)];
+	alignas(TObjectPtr<T0>) T1 Object[sizeof(TObjectPtr<T0>)];
+};
 
+struct VACTBEATS_API FBeatAsset
+{
+	static const TArray<FName> AssetTypes;
+
+	static const TMap<FName, EBeatAsset> MapAssetTypes;
+
+	EBeatAsset Type;
+
+	FName Name;
+
+	union
+	{
+		TAlignasObject<UObject> Asset;
+		alignas(FString) uint8 Text[sizeof(FString)];
+		uint8 _Raw[16];
+		uint8* _Ptr;
+	};
+
+	FBeatAsset();
+
+	template<typename T0>
+	void FORCEINLINE PlaceAssetClass(TSubclassOf<T0> InClass)
+	{
+		new (Asset.Class) TSubclassOf<T0>(InClass);
+	}
+
+	template<typename T0>
+	void FORCEINLINE PlaceAssetInstance(TSubclassOf<T0> InObject)
+	{
+		new (Asset.Object) TObjectPtr<T0>(InObject);
+	}
+
+	template<typename T0>
+	void FORCEINLINE PlaceText(FString InText)
+	{
+		new (Text) FString(MoveTemp(InText));
+	}
+};
+
+struct VACTBEATS_API FBeatEffect
+{
+	//int32 Size;
+
+	//EBeatEffectMode Mode;
+
+	float* Vector;
+
+	EMathOperation* Effector;
+
+	FBeatEffect();
+};
+
+USTRUCT(BlueprintType, Blueprintable)
+struct VACTBEATS_API FBeatTime
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BeatVector|Time")
+	float Causality;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BeatVector|Time")
+	float Branch;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "BeatVector|Time")
+	float Correlation;
+};
 
 USTRUCT(BlueprintType, Blueprintable)
 struct VACTBEATS_API FBeatEntity
 {
 	GENERATED_BODY()
 
-#if WITH_EDITORONLY_DATA
-	UPROPERTY(EditAnywhere, Category = Prototype, meta = (MultiLine = "true"))
-	FString Notes;
-#endif
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString Title;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 Id;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FName Name;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FString Title;
 
 	FBeatEntity();
 };
@@ -57,8 +143,10 @@ struct VACTBEATS_API FBeatClaim
 {
 	GENERATED_BODY()
 
+	const FBeatEntity* Entity;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FBeatEntity Entity;
+	FString Title;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	AActor* Actor;
@@ -68,7 +156,7 @@ struct VACTBEATS_API FBeatClaim
 
 	FBeatClaim();
 
-	FBeatClaim(const FBeatEntity& InEntity, AActor* InActor = nullptr);
+	FBeatClaim(const FBeatEntity* InEntity, AActor* InActor = nullptr);
 };
 
 
@@ -76,9 +164,6 @@ USTRUCT(BlueprintType, Blueprintable)
 struct VACTBEATS_API FBeatMeta
 {
 	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName Name;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 Self;
@@ -90,303 +175,35 @@ struct VACTBEATS_API FBeatMeta
 	int32 Class;
 
 	FBeatMeta();
-
-	FBeatMeta(const FBeatMeta&) = default;
-
-	FBeatMeta(FBeatMeta&&) = default;
-	
-	FBeatMeta& operator=(const FBeatMeta&) = default;
-	
-	FBeatMeta& operator=(FBeatMeta&&) = default;
 };
 
-
 USTRUCT(BlueprintType, Blueprintable)
-struct VACTBEATS_API FBeatStateTime
+struct VACTBEATS_API FBeatContext
 {
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Causality;
+	FString Title;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Branch;
+	FName Name;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Correlation;
+	TArray<FBeatAsset> Assets;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Used;
-
-	FBeatStateTime() = default;
-
-	FBeatStateTime(const FBeatStateTime&) = default;
-
-	FBeatStateTime(FBeatStateTime&&) = default;
-
-	FBeatStateTime& operator=(const FBeatStateTime&) = default;
-
-	FBeatStateTime& operator=(FBeatStateTime&&) = default;
+	FBeatContext();
 };
 
 USTRUCT(BlueprintType, Blueprintable)
-struct VACTBEATS_API FBeatStateTimeMinimal
+struct VACTBEATS_API FBeatPrototype
 {
+	static const TArray<FName> PrototypeTypes;
+
+	static const TMap<FName, EBeatPrototype> MapPrototypeTypes;
+
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Causality;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Used;
-
-	FBeatStateTimeMinimal() = default;
-
-	FBeatStateTimeMinimal(const FBeatStateTimeMinimal&) = default;
-
-	FBeatStateTimeMinimal(FBeatStateTimeMinimal&&) = default;
-
-	FBeatStateTimeMinimal& operator=(const FBeatStateTimeMinimal&) = default;
-
-	FBeatStateTimeMinimal& operator=(FBeatStateTimeMinimal&&) = default;
-};
-
-USTRUCT(BlueprintType, Blueprintable)
-struct VACTBEATS_API FBeatStateExternal
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Interrupt;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Distance;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Facing;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Direction;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Approach;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Focus;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float BAC;
-
-	FBeatStateExternal() = default;
-
-	FBeatStateExternal(const FBeatStateExternal&) = default;
-
-	FBeatStateExternal(FBeatStateExternal&&) = default;
-
-	FBeatStateExternal& operator=(const FBeatStateExternal&) = default;
-
-	FBeatStateExternal& operator=(FBeatStateExternal&&) = default;
-};
-
-USTRUCT(BlueprintType, Blueprintable)
-struct VACTBEATS_API FBeatStateExternalMinimal
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Interrupt;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Distance;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Focus;
-
-	FBeatStateExternalMinimal() = default;
-
-	FBeatStateExternalMinimal(const FBeatStateExternalMinimal&) = default;
-
-	FBeatStateExternalMinimal(FBeatStateExternalMinimal&&) = default;
-
-	FBeatStateExternalMinimal& operator=(const FBeatStateExternalMinimal&) = default;
-
-	FBeatStateExternalMinimal& operator=(FBeatStateExternalMinimal&&) = default;
-};
-
-USTRUCT(BlueprintType, Blueprintable)
-struct VACTBEATS_API FBeatStateInternal
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Shame;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Resentment;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Anxious;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Excitement;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Confidence;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Comfort;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Arousal;
-
-	FBeatStateInternal() = default;
-
-	FBeatStateInternal(const FBeatStateInternal&) = default;
-
-	FBeatStateInternal(FBeatStateInternal&&) = default;
-
-	FBeatStateInternal& operator=(const FBeatStateInternal&) = default;
-
-	FBeatStateInternal& operator=(FBeatStateInternal&&) = default;
-};
-
-USTRUCT(BlueprintType, Blueprintable)
-struct VACTBEATS_API FBeatStateInternalMinimal
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Aware;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Comfort;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Secure;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Trusting;
-
-	FBeatStateInternalMinimal() = default;
-
-	FBeatStateInternalMinimal(const FBeatStateInternalMinimal&) = default;
-
-	FBeatStateInternalMinimal(FBeatStateInternalMinimal&&) = default;
-
-	FBeatStateInternalMinimal& operator=(const FBeatStateInternalMinimal&) = default;
-
-	FBeatStateInternalMinimal& operator=(FBeatStateInternalMinimal&&) = default;
-};
-
-USTRUCT(BlueprintType, Blueprintable)
-struct VACTBEATS_API FBeatStateReflection
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Mindfool;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Empathy;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Sympathy;
-
-	FBeatStateReflection() = default;
-
-	FBeatStateReflection(const FBeatStateReflection&) = default;
-
-	FBeatStateReflection(FBeatStateReflection&&) = default;
-
-	FBeatStateReflection& operator=(const FBeatStateReflection&) = default;
-
-	FBeatStateReflection& operator=(FBeatStateReflection&&) = default;
-};
-
-
-USTRUCT(BlueprintType, Blueprintable)
-struct VACTBEATS_API FBeatVector
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FBeatStateTime Time;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FBeatStateExternal External;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FBeatStateInternal Internal;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FBeatStateReflection Reflection;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float _Noise;
-
-	FBeatVector() = default;
-
-	FBeatVector(const FBeatVector&) = default;
-
-	FBeatVector(FBeatVector&&) = default;
-
-	FBeatVector& operator=(const FBeatVector&) = default;
-
-	FBeatVector& operator=(FBeatVector&&) = default;
-
-	FORCEINLINE operator float* ()
-	{
-		return reinterpret_cast<float*>(this);
-	}
-
-	FORCEINLINE operator const float* () const
-	{
-		return reinterpret_cast<const float*>(this);
-	}
-};
-
-USTRUCT(BlueprintType, Blueprintable)
-struct VACTBEATS_API FBeatVectorMinimal
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FBeatStateTime Time;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FBeatStateExternalMinimal External;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FBeatStateInternalMinimal Internal;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float _Noise;
-
-	FBeatVectorMinimal() = default;
-
-	FBeatVectorMinimal(const FBeatVectorMinimal&) = default;
-
-	FBeatVectorMinimal(FBeatVectorMinimal&&) = default;
-
-	FBeatVectorMinimal& operator=(const FBeatVectorMinimal&) = default;
-
-	FBeatVectorMinimal& operator=(FBeatVectorMinimal&&) = default;
-
-	FORCEINLINE operator float* ()
-	{
-		return reinterpret_cast<float*>(this);
-	}
-
-	FORCEINLINE operator const float* () const
-	{
-		return reinterpret_cast<const float*>(this);
-	}
-};
-
-USTRUCT(BlueprintType, Blueprintable)
-struct VACTBEATS_API FBeatPointPrototype
-{
-	GENERATED_BODY()
+	int32 Id;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FBeatMeta Meta;
@@ -395,73 +212,19 @@ struct VACTBEATS_API FBeatPointPrototype
 	float Weight;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FBeatVector Point;
+	EBeatPrototype Type;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FWeightedEntry> Contexts;
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	//int32 CoordinateId;
 
+	float* Coordinate;
+
+	FBeatEffect Effect;
+
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	//TArray<int32> Contexts;
+
+	TArray<FBeatContext*> Contexts;
+
+	FBeatPrototype();
 };
-
-USTRUCT(BlueprintType, Blueprintable)
-struct VACTBEATS_API FBeatPointPrototypeMinimal
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FBeatMeta Meta;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Weight;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FBeatVectorMinimal Point;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FWeightedEntry> Contexts;
-
-};
-
-
-//USTRUCT(BlueprintType, Blueprintable)
-//struct VACTBEATS_API FBeatIntervalPrototype
-//{
-//	GENERATED_BODY()
-//
-//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-//	FBeatMeta Meta;
-//
-//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-//	float Weight;
-//
-//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-//	FBeatVector Min;
-//
-//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-//	FBeatVector Max;
-//
-//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-//	TArray<FWeightedEntry> Contexts;
-//
-//};
-//
-//USTRUCT(BlueprintType, Blueprintable)
-//struct VACTBEATS_API FBeatIntervalPrototypeMinimal
-//{
-//	GENERATED_BODY()
-//
-//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-//	FBeatMeta Meta;
-//
-//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-//	float Weight;
-//
-//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-//	FBeatVectorMinimal Min;
-//
-//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-//	FBeatVectorMinimal Max;
-//
-//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-//	TArray<FWeightedEntry> Contexts;
-//
-//};

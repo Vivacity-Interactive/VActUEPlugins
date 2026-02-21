@@ -2,9 +2,9 @@
 
 void UBeatAction::Execute_Implementation(
 	float DeltaTime, 
-	AActor* Self, 
+	AActor* Actor,
 	AActor* Context,
-	//const FBeatContext& BeatContext,
+	const FBeatContext& BeatContext,
 	AActor* Owner
 )
 {
