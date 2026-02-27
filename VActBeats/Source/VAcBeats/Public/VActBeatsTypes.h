@@ -68,6 +68,10 @@ struct VACTBEATS_API FBeatAsset
 	{
 		TAlignasObject<UObject> Asset;
 		alignas(FString) uint8 Text[sizeof(FString)];
+		//alignas(TArray<FName>) uint8 Names[sizeof(FName)];
+		//alignas(TArray<FString>) uint8 Texts[sizeof(FString)];
+		//alignas(TArray<float>) uint8 Floats[sizeof(float)];
+		//alignas(TArray<int32>) uint8 Ints[sizeof(int32)];
 		uint8 _Raw[16];
 		uint8* _Ptr;
 	};
@@ -93,15 +97,35 @@ struct VACTBEATS_API FBeatAsset
 	}
 };
 
-struct VACTBEATS_API FBeatEffect
+struct VACTBEATS_API FBeatVector
 {
+	//int32 Id;
+	
 	//int32 Size;
 
+	float* Data;
+
+	FBeatVector();
+};
+
+struct VACTBEATS_API FBeatEffector
+{
+	//int32 Id;
+	
+	//int32 Size;
+
+	EMathOperation* Data;
+
+	FBeatEffector();
+};
+
+struct VACTBEATS_API FBeatEffect
+{
 	//EBeatEffectMode Mode;
 
-	float* Vector;
+	FBeatVector Vector;
 
-	EMathOperation* Effector;
+	FBeatEffector Effector;
 
 	FBeatEffect();
 };
@@ -214,10 +238,7 @@ struct VACTBEATS_API FBeatPrototype
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EBeatPrototype Type;
 
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	//int32 CoordinateId;
-
-	float* Coordinate;
+	FBeatVector Coordinate;
 
 	FBeatEffect Effect;
 

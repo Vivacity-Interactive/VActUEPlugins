@@ -33,9 +33,20 @@ FBeatAsset::FBeatAsset()
 {
 }
 
+FBeatVector::FBeatVector()
+	//: Size(-1)
+	: Data(nullptr)
+{}
+
+FBeatEffector::FBeatEffector()
+//: Size(-1)
+	: Data(nullptr)
+{}
+
 FBeatEffect::FBeatEffect()
-	: Vector(nullptr)
-	, Effector(nullptr)
+	//: Mode(EBeatMode::None)
+	: Vector()
+	, Effector()
 {
 }
 
@@ -78,7 +89,7 @@ FBeatPrototype::FBeatPrototype()
 	, Meta()
 	, Weight(0.f)
 	, Type(EBeatPrototype::None)
-	, Coordinate(nullptr)
+	, Coordinate()
 	, Effect()
 	, Contexts()
 {
