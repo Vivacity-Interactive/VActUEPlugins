@@ -31,6 +31,23 @@ const TMap<FString, ECmdVActExportOptions> FVActOICEditor::ExportOptionNameToEnu
 	{ ExportOptionNames[(int32)ECmdVActExportOptions::AllCombined], ECmdVActExportOptions::AllCombined}
 };
 
+void FVActOICEditor::CreateAsset(const FString& Folder)
+{
+	FName AssetName("NewOICAsset");
+	
+	UPackage* Package = CreatePackage(*FString::Printf(TEXT("/Game/%s/%s"), *Folder, *AssetName.ToString()));
+	Package->FullyLoad();
+	
+	UOICProfile* Profile = NewObject<UOICProfile>(
+		Package,
+		UOICProfile::StaticClass(),
+		AssetName,
+		RF_Public | RF_Standalone
+	);
+
+	_SaveOICProfileAsset(Profile, Package);
+}
+
 void FVActOICEditor::Cmd_ExportToOICAsset(const TArray<FString>& Args)
 {
 	TArray<FAssetData> SelectedAssets;
@@ -91,7 +108,7 @@ void FVActOICEditor::ExportToOICAsset(const UWorld* World, const FString& Path, 
 		);
 
 		Profile->Type = "OIC";
-		Profile->Version = "V1";
+		Profile->Version = "V3";
 		Profile->Axis = "UnrealEngine";
 		Profile->Name = FName(*AssetName);
 

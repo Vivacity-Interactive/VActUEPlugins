@@ -48,6 +48,7 @@ public class VActOICEditor : ModuleRules
                 "AssetRegistry",
                 "ContentBrowser",
 				"UnrealEd",
+                "ToolMenus"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

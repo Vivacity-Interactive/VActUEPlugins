@@ -45,7 +45,8 @@ public class VActFilesEditor : ModuleRules
 				"DesktopWidgets", 
                 "InputCore",
                 "AssetRegistry",
-                "ContentBrowser"
+                "ContentBrowser",
+                "ToolMenus"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

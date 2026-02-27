@@ -350,6 +350,6 @@ public:
 	UPROPERTY()
 	TArray<FOICInstance> Instances;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY()
 	TArray<FOICMeta> Metas;
 };

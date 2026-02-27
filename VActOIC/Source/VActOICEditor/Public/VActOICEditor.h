@@ -5,6 +5,8 @@
 
 #include "Components/SceneComponent.h"
 
+#include "Factories/Factory.h"
+
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "VActOICEditor.generated.h"
@@ -26,6 +28,8 @@ struct VACTOICEDITOR_API FVActOICEditor
 
 public:
 	static const TArray<FString> ExportOptionNames;
+
+	static void CreateAsset(const FString& Folder);
 
 	static void Cmd_ExportToOICAsset(const TArray<FString>& Args);
 
