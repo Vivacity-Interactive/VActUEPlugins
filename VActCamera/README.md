@@ -1,0 +1,2 @@
+# VActCamera
+Noir-Like Camera, as if an operator is handling it, allows usage of hints and samplers to match camera behaviours to areas. Hints contain info about camera settings and behaviour plus suggestive location and rotation. [VActCamera](VActCamera/README.md)
