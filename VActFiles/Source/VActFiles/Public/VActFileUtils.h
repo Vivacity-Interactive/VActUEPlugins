@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Misc/StringBuilder.h"
+//#include "Misc/StringBuilder.h"
 #include "UObject/NameTypes.h"
 #include "VActFileTypes.h"
 
@@ -684,59 +684,59 @@ protected:
 
 struct VACTFILES_API FVActTextEmitUtils
 {
-	static void Emit(const TCHAR* Value, int32 N, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	static void Emit(const TCHAR* Value, int32 N, TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source)
 	{
-		const TCHAR* _From = *Source + Source.Len();
+		const TCHAR* _From = Source.GetData() + Source.Num();
 		Source.Append(Value, N);
 		Cursors.Add(FVActParseCursor(EVActParseToken::String, _From, _From + N));
 	}
 
-	static void Emit(const FName& Value, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	static void Emit(const FName& Value, TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source)
 	{
-		const TCHAR* _From = *Source + Source.Len();
+		const TCHAR* _From = Source.GetData() + Source.Num();
 		const FString _Value = Value.ToString();
 		const int32 N = _Value.Len();
 		Source.Append(*_Value, N);
 		Cursors.Add(FVActParseCursor(EVActParseToken::Name, _From, _From + N));
 	}
 
-	static void Emit(const float& Value, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	static void Emit(const float& Value, TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source)
 	{
-		const TCHAR* _From = *Source + Source.Len();
+		const TCHAR* _From = Source.GetData() + Source.Num();
 		const FString _Value = FString::Printf(TEXT("%e"), Value);
 		const int32 N = _Value.Len();
 		Source.Append(*_Value, N);
 		Cursors.Add(FVActParseCursor(EVActParseToken::Num, _From, _From + N));
 	}
 
-	static void Emit(const double& Value, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	static void Emit(const double& Value, TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source)
 	{
-		const TCHAR* _From = *Source + Source.Len();
+		const TCHAR* _From = Source.GetData() + Source.Num();
 		const FString _Value = FString::Printf(TEXT("%e"), Value);
 		const int32 N = _Value.Len();
 		Source.Append(*_Value, N);
 		Cursors.Add(FVActParseCursor(EVActParseToken::Num, _From, _From + N));
 	}
 
-	static void Emit(const int32& Value, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	static void Emit(const int32& Value, TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source)
 	{
-		const TCHAR* _From = *Source + Source.Len();
+		const TCHAR* _From = Source.GetData() + Source.Num();
 		const FString _Value = FString::FromInt(Value);
 		const int32 N = _Value.Len();
 		Source.Append(*_Value, N);
 		Cursors.Add(FVActParseCursor(EVActParseToken::Int, _From, _From + N));
 	}
 
-	static void Emit(const bool& Value, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	static void Emit(const bool& Value, TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source)
 	{
-		const TCHAR* _From = *Source + Source.Len();
+		const TCHAR* _From = Source.GetData() + Source.Num();
 		const FString _Value = Value ? FVActTextTokenUtils::TOKEN_TRUE : FVActTextTokenUtils::TOKEN_FALSE;
 		const int32 N = _Value.Len();
 		Source.Append(*_Value, N);
 		Cursors.Add(FVActParseCursor(EVActParseToken::Bool, _From, _From + N));
 	}
 
-	static FORCEINLINE void Emit(const FString& Value, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	static FORCEINLINE void Emit(const FString& Value, TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source)
 	{
 		FString _Value = FString::Printf(TEXT("\"%s\""), *Value);
 		const int32 N = _Value.Len();
@@ -744,37 +744,37 @@ struct VACTFILES_API FVActTextEmitUtils
 	}
 
 	template<typename T>
-	static FORCEINLINE void EmitEnum(T& Enum, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source, TArray<FName> Map)
+	static FORCEINLINE void EmitEnum(T& Enum, TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source, TArray<FName> Map)
 	{
 		if (Map.IsValidIndex((int32)Enum)) { Emit(Map[(int32)Enum], Cursors, Source); }
 	}
 
 	template<typename T>
-	static FORCEINLINE void EmitEnum(T& Enum, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source, TMap<T, FName> Map)
+	static FORCEINLINE void EmitEnum(T& Enum, TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source, TMap<T, FName> Map)
 	{
 		FName* NamePtr = Map.Find(Enum);
 		if (NamePtr) { Emit(*NamePtr, Cursors, Source); }
 	}
 
-	void EmitProperty(const TCHAR* Key, EVActParseToken KeyToken, int32 N, const TCHAR* Value, EVActParseToken ValueToken, int32 M, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	void EmitProperty(const TCHAR* Key, EVActParseToken KeyToken, int32 N, const TCHAR* Value, EVActParseToken ValueToken, int32 M, TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source)
 	{
-		const TCHAR* _Key = *Source + Source.Len();
+		const TCHAR* _Key = Source.GetData() + Source.Num();
 		Source.Append(Key, N);
 		Cursors.Add(FVActParseCursor(KeyToken, _Key, _Key + N));
 
-		Source.AppendChar(FVActTextTokenUtils::TOKEN_PROP);
+		Source.Add(FVActTextTokenUtils::TOKEN_PROP);
 
-		const TCHAR* _Value = *Source + Source.Len();
+		const TCHAR* _Value = Source.GetData() + Source.Num();
 		Source.Append(Value, M);
 		Cursors.Add(FVActParseCursor(ValueToken, _Value, _Value + M));
 
-		const TCHAR* _Prop = *Source + Source.Len();
+		const TCHAR* _Prop = Source.GetData() + Source.Num();
 		Cursors.Add(FVActParseCursor(EVActParseToken::Prop, _Key, _Prop));
 	}
 
-	static void Emit(const FQuat& Rotation, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	static void Emit(const FQuat& Rotation, TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source)
 	{
-		const TCHAR* _From = *Source + Source.Len();
+		const TCHAR* _From = Source.GetData() + Source.Num();
 		EmitTupleOpen(Cursors, Source);
 		FVActTextEmitUtils::Emit(Rotation.X, Cursors, Source); EmitDelimiter(Cursors, Source);
 		FVActTextEmitUtils::Emit(Rotation.Y, Cursors, Source); EmitDelimiter(Cursors, Source);
@@ -783,14 +783,14 @@ struct VACTFILES_API FVActTextEmitUtils
 		EmitTuple(Cursors, Source, _From);
 	}
 
-	static void EmitDelimiter(TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	static void EmitDelimiter(TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source)
 	{
-		Source.AppendChar(FVActTextTokenUtils::TOKEN_DILIM);
+		Source.Add(FVActTextTokenUtils::TOKEN_DILIM);
 	}
 
-	static void Emit(const FVector& Vector, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	static void Emit(const FVector& Vector, TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source)
 	{
-		const TCHAR* _From = *Source + Source.Len();
+		const TCHAR* _From = Source.GetData() + Source.Num();
 		EmitTupleOpen(Cursors, Source);
 		FVActTextEmitUtils::Emit(Vector.X, Cursors, Source); EmitDelimiter(Cursors, Source);
 		FVActTextEmitUtils::Emit(Vector.Y, Cursors, Source); EmitDelimiter(Cursors, Source);
@@ -798,9 +798,9 @@ struct VACTFILES_API FVActTextEmitUtils
 		EmitTuple(Cursors, Source, _From);
 	}
 
-	static void Emit(const FTransform& Transform, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	static void Emit(const FTransform& Transform, TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source)
 	{
-		const TCHAR* _From = *Source + Source.Len();
+		const TCHAR* _From = Source.GetData() + Source.Num();
 		EmitTupleOpen(Cursors, Source);
 		Emit(Transform.GetLocation(), Cursors, Source); EmitDelimiter(Cursors, Source);
 		Emit(Transform.GetRotation(), Cursors, Source); EmitDelimiter(Cursors, Source);
@@ -808,166 +808,166 @@ struct VACTFILES_API FVActTextEmitUtils
 		EmitTuple(Cursors, Source, _From);
 	}
 
-	static void EmitStruct(TArray<FVActParseCursor>& Cursors, FStringBuilderBase& Source, const TCHAR* From)
+	static void EmitStruct(TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source, const TCHAR* From)
 	{
 
-		Source.AppendChar(FVActTextTokenUtils::TOKEN_STRUCT_CLOSE);
-		const TCHAR* _To = *Source + Source.Len();
+		Source.Add(FVActTextTokenUtils::TOKEN_STRUCT_CLOSE);
+		const TCHAR* _To = Source.GetData() + Source.Num();
 		Cursors.Add(FVActParseCursor(EVActParseToken::Struct, From, _To));
 	}
 
-	static void EmitArray(TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source, const TCHAR* From)
+	static void EmitArray(TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source, const TCHAR* From)
 	{
-		Source.AppendChar(FVActTextTokenUtils::TOKEN_ARRAY_CLOSE);
-		const TCHAR* _To = *Source + Source.Len();
+		Source.Add(FVActTextTokenUtils::TOKEN_ARRAY_CLOSE);
+		const TCHAR* _To = Source.GetData() + Source.Num();
 		Cursors.Add(FVActParseCursor(EVActParseToken::Array, From, _To));
 	}
 
-	static void EmitTuple(TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source, const TCHAR* From)
+	static void EmitTuple(TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source, const TCHAR* From)
 	{
-		Source.AppendChar(FVActTextTokenUtils::TOKEN_TUPLE_CLOSE);
-		const TCHAR* _To = *Source + Source.Len();
+		Source.Add(FVActTextTokenUtils::TOKEN_TUPLE_CLOSE);
+		const TCHAR* _To = Source.GetData() + Source.Num();
 		Cursors.Add(FVActParseCursor(EVActParseToken::Tuple, From, _To));
 	}
 
-	static void EmitTag(TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source, const TCHAR* From)
+	static void EmitTag(TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source, const TCHAR* From)
 	{
-		Source.AppendChar(FVActTextTokenUtils::TOKEN_TAG_CLOSE);
-		const TCHAR* _To = *Source + Source.Len();
+		Source.Add(FVActTextTokenUtils::TOKEN_TAG_CLOSE);
+		const TCHAR* _To = Source.GetData() + Source.Num();
 		Cursors.Add(FVActParseCursor(EVActParseToken::Tag, From, _To));
 	}
 
-	static void EmitProperty(TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source, const TCHAR* From)
+	static void EmitProperty(TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source, const TCHAR* From)
 	{
-		const TCHAR* _To = *Source + Source.Len();
+		const TCHAR* _To = Source.GetData() + Source.Num();
 		Cursors.Add(FVActParseCursor(EVActParseToken::Prop, From, _To));
 	}
 
-	static void EmitAttribute(TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source, const TCHAR* From)
+	static void EmitAttribute(TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source, const TCHAR* From)
 	{
-		const TCHAR* _To = *Source + Source.Len();
+		const TCHAR* _To = Source.GetData() + Source.Num();
 		Cursors.Add(FVActParseCursor(EVActParseToken::Attr, From, _To));
 	}
 
-	static void EmitStructOpen(TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	static void EmitStructOpen(TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source)
 	{
-		const TCHAR* _From = *Source + Source.Len();
-		Source.AppendChar(FVActTextTokenUtils::TOKEN_STRUCT_OPEN);
+		const TCHAR* _From = Source.GetData() + Source.Num();
+		Source.Add(FVActTextTokenUtils::TOKEN_STRUCT_OPEN);
 		Cursors.Add(FVActParseCursor(EVActParseToken::_Struct, _From, _From + 1));
 	}
 
-	static void EmitArrayOpen(TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	static void EmitArrayOpen(TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source)
 	{
-		const TCHAR* _From = *Source + Source.Len();
-		Source.AppendChar(FVActTextTokenUtils::TOKEN_ARRAY_OPEN);
+		const TCHAR* _From = Source.GetData() + Source.Num();
+		Source.Add(FVActTextTokenUtils::TOKEN_ARRAY_OPEN);
 		Cursors.Add(FVActParseCursor(EVActParseToken::_Array, _From, _From + 1));
 	}
 
-	static void EmitTupleOpen(TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	static void EmitTupleOpen(TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source)
 	{
-		const TCHAR* _From = *Source + Source.Len();
-		Source.AppendChar(FVActTextTokenUtils::TOKEN_TUPLE_OPEN);
+		const TCHAR* _From = Source.GetData() + Source.Num();
+		Source.Add(FVActTextTokenUtils::TOKEN_TUPLE_OPEN);
 		Cursors.Add(FVActParseCursor(EVActParseToken::_Tuple, _From, _From + 1));
 	}
 
-	static void EmitTagOpen(TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	static void EmitTagOpen(TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source)
 	{
-		const TCHAR* _From = *Source + Source.Len();
-		Source.AppendChar(FVActTextTokenUtils::TOKEN_TAG_OPEN);
+		const TCHAR* _From = Source.GetData() + Source.Num();
+		Source.Add(FVActTextTokenUtils::TOKEN_TAG_OPEN);
 		Cursors.Add(FVActParseCursor(EVActParseToken::_Tag, _From, _From + 1));
 	}
 
-	static void EmitPropertyOpen(const FName& Key, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	static void EmitPropertyOpen(const FName& Key, TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source)
 	{
 		Emit(Key, Cursors, Source);
-		Source.AppendChar(FVActTextTokenUtils::TOKEN_PROP);
+		Source.Add(FVActTextTokenUtils::TOKEN_PROP);
 	}
 
-	static void EmitAttributeOpen(const FName& Key, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	static void EmitAttributeOpen(const FName& Key, TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source)
 	{
 		Emit(Key, Cursors, Source);
-		Source.AppendChar(FVActTextTokenUtils::TOKEN_ATTR);
+		Source.Add(FVActTextTokenUtils::TOKEN_ATTR);
 	}
 
 	template<typename T>
-	static void EmitEnumProperty(const FName& Key, const T& Enum, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source, TArray<FName> Map)
+	static void EmitEnumProperty(const FName& Key, const T& Enum, TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source, TArray<FName> Map)
 	{
-		const TCHAR* _From = *Source + Source.Len();
+		const TCHAR* _From = Source.GetData() + Source.Num();
 		Emit(Key, Cursors, Source);
-		Source.AppendChar(FVActTextTokenUtils::TOKEN_PROP);
+		Source.Add(FVActTextTokenUtils::TOKEN_PROP);
 		EmitEnum(Enum, Cursors, Source, Map);
-		const TCHAR* _To = *Source + Source.Len();
+		const TCHAR* _To = Source.GetData() + Source.Num();
 		Cursors.Add(FVActParseCursor(EVActParseToken::Prop, _From, _To));
 	}
 
 	template<typename T>
-	static void EmitEnumProperty(const FName& Key, const T& Enum, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source, TMap<T, FName> Map)
+	static void EmitEnumProperty(const FName& Key, const T& Enum, TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source, TMap<T, FName> Map)
 	{
-		const TCHAR* _From = *Source + Source.Len();
+		const TCHAR* _From = Source.GetData() + Source.Num();
 		Emit(Key, Cursors, Source);
-		Source.AppendChar(FVActTextTokenUtils::TOKEN_PROP);
+		Source.Add(FVActTextTokenUtils::TOKEN_PROP);
 		EmitEnum(Enum, Cursors, Source, Map);
-		const TCHAR* _To = *Source + Source.Len();
+		const TCHAR* _To = Source.GetData() + Source.Num();
 		Cursors.Add(FVActParseCursor(EVActParseToken::Prop, _From, _To));
 	}
 
 	template<typename T>
-	static void EmitProperty(const FName& Key, const T& Value, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	static void EmitProperty(const FName& Key, const T& Value, TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source)
 	{
-		const TCHAR* _From = *Source + Source.Len();
+		const TCHAR* _From = Source.GetData() + Source.Num();
 		Emit(Key, Cursors, Source);
-		Source.AppendChar(FVActTextTokenUtils::TOKEN_PROP);
+		Source.Add(FVActTextTokenUtils::TOKEN_PROP);
 		Emit(Value, Cursors, Source);
-		const TCHAR* _To = *Source + Source.Len();
+		const TCHAR* _To = Source.GetData() + Source.Num();
 		Cursors.Add(FVActParseCursor(EVActParseToken::Prop, _From, _To));
 	}
 
 	template<typename T>
-	static void EmitAttribute(const FName& Key, const T& Value, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	static void EmitAttribute(const FName& Key, const T& Value, TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source)
 	{
-		const TCHAR* _From = *Source + Source.Len();
+		const TCHAR* _From = Source.GetData() + Source.Num();
 		Emit(Key, Cursors, Source);
-		Source.AppendChar(FVActTextTokenUtils::TOKEN_ATTR);
+		Source.Add(FVActTextTokenUtils::TOKEN_ATTR);
 		Emit(Value, Cursors, Source);
-		const TCHAR* _To = *Source + Source.Len();
+		const TCHAR* _To = Source.GetData() + Source.Num();
 		Cursors.Add(FVActParseCursor(EVActParseToken::Attr, _From, _To));
 	}
 
 	template<typename T>
-	static void EmitAttribute(const FName& Key, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	static void EmitAttribute(const FName& Key, TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source)
 	{
-		const TCHAR* _From = *Source + Source.Len();
+		const TCHAR* _From = Source.GetData() + Source.Num();
 		Emit(Key, Cursors, Source);
-		const TCHAR* _To = *Source + Source.Len();
+		const TCHAR* _To = Source.GetData() + Source.Num();
 		Cursors.Add(FVActParseCursor(EVActParseToken::Attr, _From, _To));
 	}
 
 	template<typename T>
-	static void EmitEnumAttribute(const FName& Key, const T& Value, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source, TArray<FName> Map)
+	static void EmitEnumAttribute(const FName& Key, const T& Value, TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source, TArray<FName> Map)
 	{
-		const TCHAR* _From = *Source + Source.Len();
+		const TCHAR* _From = Source.GetData() + Source.Num();
 		Emit(Key, Cursors, Source);
-		Source.AppendChar(FVActTextTokenUtils::TOKEN_ATTR);
+		Source.Add(FVActTextTokenUtils::TOKEN_ATTR);
 		EmitEnum(Value, Cursors, Source, Map);
-		const TCHAR* _To = *Source + Source.Len();
+		const TCHAR* _To = Source.GetData() + Source.Num();
 		Cursors.Add(FVActParseCursor(EVActParseToken::Attr, _From, _To));
 	}
 
 	template<typename T>
-	static void EmitEnumAttribute(const FName& Key, const T& Value, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source, TMap<T, FName> Map)
+	static void EmitEnumAttribute(const FName& Key, const T& Value, TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source, TMap<T, FName> Map)
 	{
-		const TCHAR* _From = *Source + Source.Len();
+		const TCHAR* _From = Source.GetData() + Source.Num();
 		Emit(Key, Cursors, Source);
-		Source.AppendChar(FVActTextTokenUtils::TOKEN_ATTR);
+		Source.Add(FVActTextTokenUtils::TOKEN_ATTR);
 		EmitEnum(Value, Cursors, Source, Map);
-		const TCHAR* _To = *Source + Source.Len();
+		const TCHAR* _To = Source.GetData() + Source.Num();
 		Cursors.Add(FVActParseCursor(EVActParseToken::Attr, _From, _To));
 	}
 
 	template<typename T>
-	static void EmitTuple(T* Tuple, TArray<FVActParseCursor>& Cursors, int32 Count, TStringBuilderBase<TCHAR>& Source)
+	static void EmitTuple(T* Tuple, TArray<FVActParseCursor>& Cursors, int32 Count, TArray<TCHAR>& Source)
 	{
-		const TCHAR* _From = *Source + Source.Len();
+		const TCHAR* _From = Source.GetData() + Source.Num();
 		EmitTupleOpen(Cursors, Source);
 		for (int32 Index = 0; Index < Count; ++Index)
 		{ 
@@ -978,10 +978,10 @@ struct VACTFILES_API FVActTextEmitUtils
 	}
 
 	template<typename T>
-	static void EmitTuple(TArray<T> Tuple, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	static void EmitTuple(TArray<T> Tuple, TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source)
 	{
 		const int32 Count = Tuple.Num();
-		const TCHAR* _From = *Source + Source.Len();
+		const TCHAR* _From = Source.GetData() + Source.Num();
 		EmitTupleOpen(Cursors, Source);
 		for (int32 Index = 0; Index < Count; ++Index)
 		{
@@ -992,9 +992,9 @@ struct VACTFILES_API FVActTextEmitUtils
 	}
 
 	template<typename T>
-	static void EmitArray(T* Array, TArray<FVActParseCursor>& Cursors, int32 Count, TStringBuilderBase<TCHAR>& Source)
+	static void EmitArray(T* Array, TArray<FVActParseCursor>& Cursors, int32 Count, TArray<TCHAR>& Source)
 	{
-		const TCHAR* _From = *Source + Source.Len();
+		const TCHAR* _From = Source.GetData() + Source.Num();
 		EmitArrayOpen(Cursors, Source);
 		for (int32 Index = 0; Index < Count; ++Index)
 		{ 
@@ -1005,9 +1005,9 @@ struct VACTFILES_API FVActTextEmitUtils
 	}
 
 	template<typename T>
-	static void EmitEnumArray(T* Array, TArray<FVActParseCursor>& Cursors, int32 Count, TStringBuilderBase<TCHAR>& Source, TArray<FName> Map)
+	static void EmitEnumArray(T* Array, TArray<FVActParseCursor>& Cursors, int32 Count, TArray<TCHAR>& Source, TArray<FName> Map)
 	{
-		const TCHAR* _From = *Source + Source.Len();
+		const TCHAR* _From = Source.GetData() + Source.Num();
 		EmitArrayOpen(Cursors, Source);
 		for (int32 Index = 0; Index < Count; ++Index)
 		{ 
@@ -1018,9 +1018,9 @@ struct VACTFILES_API FVActTextEmitUtils
 	}
 
 	template<typename T>
-	static void EmitEnumArray(T* Array, TArray<FVActParseCursor>& Cursors, int32 Count, TStringBuilderBase<TCHAR>& Source, TMap<T, FName> Map)
+	static void EmitEnumArray(T* Array, TArray<FVActParseCursor>& Cursors, int32 Count, TArray<TCHAR>& Source, TMap<T, FName> Map)
 	{
-		const TCHAR* _From = *Source + Source.Len();
+		const TCHAR* _From = Source.GetData() + Source.Num();
 		EmitArrayOpen(Cursors, Source);
 		for (int32 Index = 0; Index < Count; ++Index)
 		{ 
@@ -1031,10 +1031,10 @@ struct VACTFILES_API FVActTextEmitUtils
 	}
 
 	template<typename T>
-	static void EmitArray(TArray<T> Array, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	static void EmitArray(TArray<T> Array, TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source)
 	{
 		const int32 Count = Array.Num();
-		const TCHAR* _From = *Source + Source.Len();
+		const TCHAR* _From = Source.GetData() + Source.Num();
 		EmitArrayOpen(Cursors, Source);
 		for (int32 Index = 0; Index < Count; ++Index)
 		{
@@ -1045,9 +1045,9 @@ struct VACTFILES_API FVActTextEmitUtils
 	}
 
 	template<typename T>
-	static void EmitEnumArray(TArray<T> Array, TArray<FVActParseCursor>& Cursors, int32 Count, TStringBuilderBase<TCHAR>& Source, TArray<FName> Map)
+	static void EmitEnumArray(TArray<T> Array, TArray<FVActParseCursor>& Cursors, int32 Count, TArray<TCHAR>& Source, TArray<FName> Map)
 	{
-		const TCHAR* _From = *Source + Source.Len();
+		const TCHAR* _From = Source.GetData() + Source.Num();
 		EmitArrayOpen(Cursors, Source);
 		for (int32 Index = 0; Index < Count; ++Index)
 		{
@@ -1058,9 +1058,9 @@ struct VACTFILES_API FVActTextEmitUtils
 	}
 
 	template<typename T>
-	static void EmitEnumArray(TArray<T> Array, TArray<FVActParseCursor>& Cursors, int32 Count, TStringBuilderBase<TCHAR>& Source, TMap<T, FName> Map)
+	static void EmitEnumArray(TArray<T> Array, TArray<FVActParseCursor>& Cursors, int32 Count, TArray<TCHAR>& Source, TMap<T, FName> Map)
 	{
-		const TCHAR* _From = *Source + Source.Len();
+		const TCHAR* _From = Source.GetData() + Source.Num();
 		EmitArrayOpen(Cursors, Source);
 		for (int32 Index = 0; Index < Count; ++Index)
 		{
@@ -1071,10 +1071,10 @@ struct VACTFILES_API FVActTextEmitUtils
 	}
 
 	template<typename T>
-	static void EmitRefArray(TArray<T> Array, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	static void EmitRefArray(TArray<T> Array, TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source)
 	{
 		const int32 Count = Array.Num();
-		const TCHAR* _From = *Source + Source.Len();
+		const TCHAR* _From = Source.GetData() + Source.Num();
 		EmitArrayOpen(Cursors, Source);
 		for (int32 Index = 0; Index < Count; ++Index)
 		{
@@ -1085,10 +1085,10 @@ struct VACTFILES_API FVActTextEmitUtils
 	}
 
 	template<typename T>
-	static void EmitRefArray(TArray<TObjectPtr<T>> Array, TArray<FVActParseCursor>& Cursors, TStringBuilderBase<TCHAR>& Source)
+	static void EmitRefArray(TArray<TObjectPtr<T>> Array, TArray<FVActParseCursor>& Cursors, TArray<TCHAR>& Source)
 	{
 		const int32 Count = Array.Num();
-		const TCHAR* _From = *Source + Source.Len();
+		const TCHAR* _From = Source.GetData() + Source.Num();
 		EmitArrayOpen(Cursors, Source);
 		for (int32 Index = 0; Index < Count; ++Index)
 		{ 

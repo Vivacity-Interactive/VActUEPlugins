@@ -1,7 +1,7 @@
 #pragma once
 
 #include "VActFileEntryTypes.h"
-#include "Misc/StringBuilder.h"
+//#include "Misc/StringBuilder.h"
 
 enum class EVActParseToken
 {
@@ -205,7 +205,7 @@ struct VACTFILES_API FVActEmitRoot
 {
 	EVActFileFormat Format;
 	TArray<FVActParseCursor> Cursors;
-	TStringBuilderBase<TCHAR> Source;
+	TArray<TCHAR> Source;
 
 	FVActEmitRoot(EVActFileFormat InFormat = EVActFileFormat::None)
 	{
@@ -214,17 +214,17 @@ struct VACTFILES_API FVActEmitRoot
 
 	FORCEINLINE FStringView View()
 	{
-		return Source.ToView();
+		return FStringView(Source.GetData(), Source.Num());
 	};
 
 	FORCEINLINE const FStringView View() const
 	{
-		return Source.ToView();
+		return FStringView(Source.GetData(), Source.Num());
 	};
 
 	FORCEINLINE const TCHAR* End() const
 	{
-		return Source.GetData() + Source.Len();
+		return Source.GetData() + Source.Num();
 	};
 };
 
